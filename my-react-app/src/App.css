@@ -241,10 +241,39 @@ button {
   }
 }
 
-input {
+.input-container {
+  position: relative;
+  margin: 10px 0;
+  width: 100%;
+}
+
+.input-container input{
   padding: 12px;
   border: 1px solid #ccc;
   border-radius: 25px;
   width: 100%;
   box-sizing: border-box;
+}
+
+.input-container label {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #3d3d3d;
+  padding: 0 4px;
+  color: #999;
+  font-size: 16px;
+  pointer-events: none; /* Allows clicks to pass through to the input */
+  transition: 0.2s ease all; /* Creates the smooth moving effect */
+}
+
+.input-container.active label {
+  top: 0;
+  font-size: 12px;
+  color: #ffffff; /* Changes color of the title when active */
+}
+
+.input-container.active input {
+  border-color: #ffffff;
 }

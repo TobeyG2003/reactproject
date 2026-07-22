@@ -3,10 +3,31 @@ import { useState } from 'react'
 import '../App.css'
 
 export function Signup() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [email, setEmail] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [user, setUser] = useState({
+    username: '',
+    displayName: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+
+  const [isFocused, setIsFocused] = useState({
+    username: false,
+    displayName: false,
+    email: false,
+    password: false,
+    confirmPassword: false
+  });
+
+  const handleFocus = (field) => {
+    setIsFocused({ ...isFocused, [field]: true });
+  }
+
+  const handleBlur = (field) => {
+    if (user[field] === '') {
+      setIsFocused({ ...isFocused, [field]: false });
+    }
+  }
 
   return (
     <>
@@ -38,34 +59,61 @@ export function Signup() {
             boxShadow: '0 0 5px #005bd3, 0 0 15px #005bd3, 0 0 30px #005bd3'
           }}
         >
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
+          <div className={`input-container ${isFocused.username ? 'active' : ''}`}>
+            <input
+              type="text"
+              value={user.username}
+              onFocus={() => handleFocus('username')}
+              onBlur={() => handleBlur('username')}
+              onChange={(e) => setUser({...user, username: e.target.value})}
+              required
+            />
+            <label>Username</label>
+          </div>
+          <div className={`input-container ${isFocused.displayName ? 'active' : ''}`}>
+            <label>Display Name</label>
+            <input
+              type="text"
+              value={user.displayName}
+              onFocus={() => handleFocus('displayName')}
+              onBlur={() => handleBlur('displayName')}
+              onChange={(e) => setUser({...user, displayName: e.target.value})}
+              required
+            />
+          </div>
+          <div className={`input-container ${isFocused.email ? 'active' : ''}`}>
+            <label>Email</label>
+            <input
+              type="email"
+              value={user.email}
+              onFocus={() => handleFocus('email')}
+              onBlur={() => handleBlur('email')}
+              onChange={(e) => setUser({...user, email: e.target.value})}
+              required
+            />
+          </div>
+          <div className={`input-container ${isFocused.password ? 'active' : ''}`}>
+            <label>Password</label>
+            <input
+              type="password"
+              value={user.password}
+              onFocus={() => handleFocus('password')}
+              onBlur={() => handleBlur('password')}
+              onChange={(e) => setUser({...user, password: e.target.value})}
+              required
+            />
+          </div>
+          <div className={`input-container ${isFocused.confirmPassword ? 'active' : ''}`}>
+            <label>Confirm Password</label>
+            <input
+              type="password"
+              value={user.confirmPassword}
+              onFocus={() => handleFocus('confirmPassword')}
+              onBlur={() => handleBlur('confirmPassword')}
+              onChange={(e) => setUser({...user, confirmPassword: e.target.value})}
+              required
+            />
+          </div>
           <button>Signup</button>
           <p>
             Already have an account? <Link to="/login">Log in</Link>

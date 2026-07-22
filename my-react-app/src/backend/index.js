@@ -84,6 +84,7 @@ db.connect((err) => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       likes_count INT DEFAULT 0,
+      image_url MEDIUMTEXT,
       FOREIGN KEY (forum_id) REFERENCES forums(id) ON DELETE CASCADE,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
@@ -104,12 +105,15 @@ db.connect((err) => {
       id INT AUTO_INCREMENT PRIMARY KEY,
       post_id INT NOT NULL,
       user_id INT NOT NULL,
+      parent_comment_id INT DEFAULT NULL,
       content TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       likes_count INT DEFAULT 0,
+      image_url MEDIUMTEXT,
       FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (parent_comment_id) REFERENCES comments(id) ON DELETE CASCADE
     )
   `;
 

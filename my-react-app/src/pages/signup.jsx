@@ -19,6 +19,14 @@ export function Signup() {
     confirmPassword: false
   });
 
+  const [error, setError] = useState({
+    usernameError: '',
+    displayNameError: '',
+    emailError: '',
+    passwordError: '',
+    confirmPasswordError: ''
+  });
+
   const handleFocus = (field) => {
     setIsFocused({ ...isFocused, [field]: true });
   }
@@ -29,6 +37,59 @@ export function Signup() {
     }
   }
 
+  const validateForm = () => {
+    const nextErrors = {
+      usernameError: '',
+      displayNameError: '',
+      emailError: '',
+      passwordError: '',
+      confirmPasswordError: ''
+    };
+
+    let isValid = true;
+
+    if (user.username.trim() === '') {
+      nextErrors.usernameError = 'Please enter a username';
+      isValid = false;
+    }
+
+    if (user.displayName.trim() === '') {
+      nextErrors.displayNameError = 'Please enter a display name';
+      isValid = false;
+    }
+
+    if (user.email.trim() === '' || !/\S+@\S+\.\S+/.test(user.email)) {
+      nextErrors.emailError = 'Please enter a valid email address';
+      isValid = false;
+    }
+
+    if (user.password === '') {
+      nextErrors.passwordError = 'Please enter a password';
+      isValid = false;
+    } else if (user.password.length < 6) {
+      nextErrors.passwordError = 'Password must be at least 6 characters long';
+      isValid = false;
+    }
+
+    if (user.confirmPassword === '') {
+      nextErrors.confirmPasswordError = 'Please re-enter your password';
+      isValid = false;
+    } else if (user.password !== user.confirmPassword) {
+      nextErrors.confirmPasswordError = 'Passwords do not match';
+      isValid = false;
+    }
+
+    setError(nextErrors);
+    return isValid;
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (validateForm()) {
+      // Submit the form data to the server or perform any other action
+      console.log('Form submitted:', user);
+    }
+  }
   return (
     <>
       <section id="signup"
@@ -59,6 +120,7 @@ export function Signup() {
             boxShadow: '0 0 5px #005bd3, 0 0 15px #005bd3, 0 0 30px #005bd3'
           }}
         >
+          <form noValidate onSubmit={handleSubmit}>
           <div className={`input-container ${isFocused.username ? 'active' : ''}`}>
             <input
               type="text"
@@ -68,10 +130,10 @@ export function Signup() {
               onChange={(e) => setUser({...user, username: e.target.value})}
               required
             />
-            <label>Username</label>
+            <label style = {{ color: error.usernameError ? '#b30000' : '' }}>{error.usernameError ? error.usernameError : 'Username'}</label>
           </div>
           <div className={`input-container ${isFocused.displayName ? 'active' : ''}`}>
-            <label>Display Name</label>
+            <label style = {{ color: error.displayNameError ? '#b30000' : '' }}>{error.displayNameError ? error.displayNameError : 'Display Name'}</label>
             <input
               type="text"
               value={user.displayName}
@@ -82,7 +144,7 @@ export function Signup() {
             />
           </div>
           <div className={`input-container ${isFocused.email ? 'active' : ''}`}>
-            <label>Email</label>
+            <label style = {{ color: error.emailError ? '#b30000' : '' }}>{error.emailError ? error.emailError : 'Email'}</label>
             <input
               type="email"
               value={user.email}
@@ -93,7 +155,7 @@ export function Signup() {
             />
           </div>
           <div className={`input-container ${isFocused.password ? 'active' : ''}`}>
-            <label>Password</label>
+            <label style = {{ color: error.passwordError ? '#b30000' : '' }}>{error.passwordError ? error.passwordError : 'Password'}</label>
             <input
               type="password"
               value={user.password}
@@ -104,7 +166,7 @@ export function Signup() {
             />
           </div>
           <div className={`input-container ${isFocused.confirmPassword ? 'active' : ''}`}>
-            <label>Confirm Password</label>
+            <label style = {{ color: error.confirmPasswordError ? '#b30000' : '' }}>{error.confirmPasswordError ? error.confirmPasswordError : 'Confirm Password'}</label>
             <input
               type="password"
               value={user.confirmPassword}
@@ -114,7 +176,8 @@ export function Signup() {
               required
             />
           </div>
-          <button>Signup</button>
+          <button type="submit">Signup</button>
+          </form>
           <p>
             Already have an account? <Link to="/login">Log in</Link>
           </p>

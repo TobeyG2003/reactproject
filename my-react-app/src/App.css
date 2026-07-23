@@ -243,7 +243,7 @@ button {
 
 .input-container {
   position: relative;
-  margin: 10px 0;
+  margin: 15px 0;
   width: 100%;
 }
 
@@ -264,14 +264,14 @@ button {
   padding: 0 4px;
   color: #999;
   font-size: 16px;
-  pointer-events: none; /* Allows clicks to pass through to the input */
-  transition: 0.2s ease all; /* Creates the smooth moving effect */
+  pointer-events: none;
+  transition: 0.2s ease all;
 }
 
 .input-container.active label {
   top: 0;
   font-size: 12px;
-  color: #ffffff; /* Changes color of the title when active */
+  color: #ffffff;
 }
 
 .input-container.active input {

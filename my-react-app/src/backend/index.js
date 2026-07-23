@@ -1,5 +1,6 @@
 ﻿import express from "express";
 import mysql from "mysql2";
+import cors from "cors";
 
 const app = express();
 
@@ -9,6 +10,9 @@ const db = mysql.createConnection({
   password: "sqlPass03",
   database: "mydatabase",
 });
+
+app.use(express.json());
+app.use(cors());
 
 db.connect((err) => {
   if (err) {
@@ -25,7 +29,7 @@ db.connect((err) => {
       username VARCHAR(50) NOT NULL UNIQUE,
       display_name VARCHAR(50) NOT NULL,
       email VARCHAR(100) NOT NULL UNIQUE,
-      password_hash VARCHAR(255) NOT NULL,
+      password VARCHAR(255) NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       bio TEXT,
       profile_picture_url MEDIUMTEXT,
@@ -153,7 +157,7 @@ db.connect((err) => {
   `;
 
   const createSampleUsers = `
-    INSERT IGNORE INTO users (username, display_name, email, password_hash)
+    INSERT IGNORE INTO users (username, display_name, email, password)
     VALUES
       ('user1', 'User One', 'user1@example.com', 'password1'),
       ('user2', 'User Two', 'user2@example.com', 'password2'),
@@ -370,6 +374,24 @@ app.get("/users", (req, res) => {
       return res.status(500).json({ error: "Unable to read users from the database." });
     }
     return res.json(data);
+  });
+});
+
+app.post("/users", (req, res) => {
+  const q = "INSERT INTO users (`username`, `display_name`, `email`, `password`) VALUES (?)";
+  const values = [
+    req.body.username,
+    req.body.displayName,
+    req.body.email,
+    req.body.password
+  ];
+
+  db.query(q, [values], (err, data) => {
+    if (err) {
+      console.error("Failed to create user:", err.message);
+      return res.status(500).json({ error: "Unable to create user in the database." });
+    }
+    return res.json({ message: "User created successfully!", userId: data.insertId });
   });
 });
 

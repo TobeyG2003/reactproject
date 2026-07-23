@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import '../App.css'
+import axios from 'axios'
 
 export function Signup() {
   const [user, setUser] = useState({
@@ -83,11 +84,22 @@ export function Signup() {
     return isValid;
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
-      // Submit the form data to the server or perform any other action
-      console.log('Form submitted:', user);
+      console.log('Form validated');
+      try {
+        const payload = {
+          username: user.username.trim(),
+          displayName: user.displayName.trim(),
+          email: user.email.trim(),
+          password: user.password
+        };
+
+        await axios.post('http://localhost:3000/users', payload);
+      } catch (error) {
+        console.error('Error during signup:', error);
+      }
     }
   }
   return (

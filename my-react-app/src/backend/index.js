@@ -366,9 +366,73 @@ app.get("/", (req, res) => {
 });
 
 app.get("/users", (req, res) => {
-  const q = "SELECT * FROM users";
+  const { username, email } = req.query;
 
+  // 1. Fetch by specific username
+  if (username) {
+    const q = "SELECT id FROM users WHERE username = ?";
+    // REMOVED 'return' from before db.query
+    db.query(q, [username], (err, data) => {
+      if (err) {
+        console.error("Failed search users: ", err.message);
+        return res.status(500).json({ error: "Unable to check usernames." });
+      }
+      return res.json(data); // This return safely stops the callback execution
+    });
+    return; // This return ensures the rest of the GET route doesn't run
+  }
+
+  // 2. Fetch by specific email
+  if (email) {
+    const q = "SELECT id FROM users WHERE email = ?";
+    // REMOVED 'return' from before db.query
+    db.query(q, [email], (err, data) => {
+      if (err) {
+        console.error("Failed search emails: ", err.message);
+        return res.status(500).json({ error: "Unable to check emails." });
+      }
+      return res.json(data);
+    });
+    return;
+  }
+
+  // 3. Fallback: Fetch all users if no specific query params were provided
+  const q = "SELECT * FROM users";
   db.query(q, (err, data) => {
+    if (err) {
+      console.error("Failed to get users: ", err.message);
+      return res.status(500).json({ error: "Unable to retrieve users." });
+    }
+    return res.json(data);
+  });
+});
+/*app.get("/users", (req, res) => {
+  const { username, email } = req.query;
+
+  if (username) {
+    const q = "SELECT COUNT(*) AS count FROM users WHERE username = ?";
+    db.query(q, [username], (err, data) => {
+      if (err) {
+        console.error("Failed to check username:", err.message);
+        return res.status(500).json({ error: "Unable to check username." });
+      }
+      return res.json({ exists: data[0].count > 0 });
+    });
+  }
+
+  if (email) {
+    const q = "SELECT COUNT(*) AS count FROM users WHERE email = ?";
+    db.query(q, [email], (err, data) => {
+      if (err) {
+        console.error("Failed to check email:", err.message);
+        return res.status(500).json({ error: "Unable to check email." });
+      }
+      return res.json({ exists: data[0].count > 0 });
+    });
+  }
+
+  const q = "SELECT * FROM users";
+  return db.query(q, (err, data) => {
     if (err) {
       console.error("Failed to fetch users:", err.message);
       return res.status(500).json({ error: "Unable to read users from the database." });
@@ -376,7 +440,7 @@ app.get("/users", (req, res) => {
     return res.json(data);
   });
 });
-
+*/
 app.post("/users", (req, res) => {
   const q = "INSERT INTO users (`username`, `display_name`, `email`, `password`) VALUES (?)";
   const values = [
@@ -394,7 +458,7 @@ app.post("/users", (req, res) => {
     return res.json({ message: "User created successfully!", userId: data.insertId });
   });
 });
-
 app.listen(3000, () => {
   console.log("Server is running on port 3000!");
 });
+

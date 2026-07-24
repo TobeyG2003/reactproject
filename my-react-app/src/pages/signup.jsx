@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+﻿import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import '../App.css'
 import axios from 'axios'
@@ -29,16 +29,36 @@ export function Signup() {
   });
 
   const handleFocus = (field) => {
-    setIsFocused({ ...isFocused, [field]: true });
+    setIsFocused((prev) => ({ ...prev, [field]: true }));
   }
 
   const handleBlur = (field) => {
     if (user[field] === '') {
-      setIsFocused({ ...isFocused, [field]: false });
+      setIsFocused((prev) => ({ ...prev, [field]: false }));
     }
   }
 
-  const validateForm = () => {
+  const checkUsernameAvailability = async (username) => {
+    try {
+      const response = await axios.get(`http://localhost:3000/users?username=${username}`);
+      return response.data.length === 0;
+    } catch (error) {
+      console.error('Error checking username: ', error);
+      return false;
+    }
+  }
+
+  const checkEmailAvailability = async (email) => {
+    try {
+      const response = await axios.get(`http://localhost:3000/users?email=${email}`);
+      return response.data.length === 0;
+    } catch (error) {
+      console.error('Error checking email: ', error);
+      return false;
+    }
+  }
+
+  const validateForm = async () => {
     const nextErrors = {
       usernameError: '',
       displayNameError: '',
@@ -48,10 +68,17 @@ export function Signup() {
     };
 
     let isValid = true;
+    const trimmedUsername = user.username.trim();
 
-    if (user.username.trim() === '') {
+    if (trimmedUsername === '') {
       nextErrors.usernameError = 'Please enter a username';
       isValid = false;
+    } else {
+      const isUsernameAvailable = await checkUsernameAvailability(trimmedUsername);
+      if (!isUsernameAvailable) {
+        nextErrors.usernameError = 'Username is unavailable';
+        isValid = false;
+      }
     }
 
     if (user.displayName.trim() === '') {
@@ -62,6 +89,12 @@ export function Signup() {
     if (user.email.trim() === '' || !/\S+@\S+\.\S+/.test(user.email)) {
       nextErrors.emailError = 'Please enter a valid email address';
       isValid = false;
+    } else {
+      const isEmailAvailable = await checkEmailAvailability(user.email.trim());
+      if (!isEmailAvailable) {
+        nextErrors.emailError = 'Email is unavailable';
+        isValid = false;
+      }
     }
 
     if (user.password === '') {
@@ -86,14 +119,13 @@ export function Signup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      console.log('Form validated');
+    if (await validateForm()) {
       try {
         const payload = {
           username: user.username.trim(),
           displayName: user.displayName.trim(),
           email: user.email.trim(),
-          password: user.password
+          password: user.password.trim()
         };
 
         await axios.post('http://localhost:3000/users', payload);
@@ -102,17 +134,20 @@ export function Signup() {
       }
     }
   }
+
   return (
     <>
-      <section id="signup"
-      style={{
+      <section
+        id="signup"
+        style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '16px',
           padding: '16px',
           alignItems: 'center',
-          justifyContent: 'center',
-        }}>
+          justifyContent: 'center'
+        }}
+      >
         <div className="content">
           <h1>Signup</h1>
           <p>Please fill out the form to create an account.</p>
@@ -133,62 +168,72 @@ export function Signup() {
           }}
         >
           <form noValidate onSubmit={handleSubmit}>
-          <div className={`input-container ${isFocused.username ? 'active' : ''}`}>
-            <input
-              type="text"
-              value={user.username}
-              onFocus={() => handleFocus('username')}
-              onBlur={() => handleBlur('username')}
-              onChange={(e) => setUser({...user, username: e.target.value})}
-              required
-            />
-            <label style = {{ color: error.usernameError ? '#b30000' : '' }}>{error.usernameError ? error.usernameError : 'Username'}</label>
-          </div>
-          <div className={`input-container ${isFocused.displayName ? 'active' : ''}`}>
-            <label style = {{ color: error.displayNameError ? '#b30000' : '' }}>{error.displayNameError ? error.displayNameError : 'Display Name'}</label>
-            <input
-              type="text"
-              value={user.displayName}
-              onFocus={() => handleFocus('displayName')}
-              onBlur={() => handleBlur('displayName')}
-              onChange={(e) => setUser({...user, displayName: e.target.value})}
-              required
-            />
-          </div>
-          <div className={`input-container ${isFocused.email ? 'active' : ''}`}>
-            <label style = {{ color: error.emailError ? '#b30000' : '' }}>{error.emailError ? error.emailError : 'Email'}</label>
-            <input
-              type="email"
-              value={user.email}
-              onFocus={() => handleFocus('email')}
-              onBlur={() => handleBlur('email')}
-              onChange={(e) => setUser({...user, email: e.target.value})}
-              required
-            />
-          </div>
-          <div className={`input-container ${isFocused.password ? 'active' : ''}`}>
-            <label style = {{ color: error.passwordError ? '#b30000' : '' }}>{error.passwordError ? error.passwordError : 'Password'}</label>
-            <input
-              type="password"
-              value={user.password}
-              onFocus={() => handleFocus('password')}
-              onBlur={() => handleBlur('password')}
-              onChange={(e) => setUser({...user, password: e.target.value})}
-              required
-            />
-          </div>
-          <div className={`input-container ${isFocused.confirmPassword ? 'active' : ''}`}>
-            <label style = {{ color: error.confirmPasswordError ? '#b30000' : '' }}>{error.confirmPasswordError ? error.confirmPasswordError : 'Confirm Password'}</label>
-            <input
-              type="password"
-              value={user.confirmPassword}
-              onFocus={() => handleFocus('confirmPassword')}
-              onBlur={() => handleBlur('confirmPassword')}
-              onChange={(e) => setUser({...user, confirmPassword: e.target.value})}
-              required
-            />
-          </div>
-          <button type="submit">Signup</button>
+            <div className={`input-container ${isFocused.username ? 'active' : ''}`}>
+              <input
+                type="text"
+                value={user.username}
+                onFocus={() => handleFocus('username')}
+                onBlur={() => handleBlur('username')}
+                onChange={(e) => setUser({ ...user, username: e.target.value })}
+                required
+              />
+              <label style={{ color: error.usernameError ? '#b30000' : '' }}>
+                {error.usernameError ? error.usernameError : 'Username (Unique ID)'}
+              </label>
+            </div>
+            <div className={`input-container ${isFocused.displayName ? 'active' : ''}`}>
+              <label style={{ color: error.displayNameError ? '#b30000' : '' }}>
+                {error.displayNameError ? error.displayNameError : 'Display Name'}
+              </label>
+              <input
+                type="text"
+                value={user.displayName}
+                onFocus={() => handleFocus('displayName')}
+                onBlur={() => handleBlur('displayName')}
+                onChange={(e) => setUser({ ...user, displayName: e.target.value })}
+                required
+              />
+            </div>
+            <div className={`input-container ${isFocused.email ? 'active' : ''}`}>
+              <label style={{ color: error.emailError ? '#b30000' : '' }}>
+                {error.emailError ? error.emailError : 'Email'}
+              </label>
+              <input
+                type="email"
+                value={user.email}
+                onFocus={() => handleFocus('email')}
+                onBlur={() => handleBlur('email')}
+                onChange={(e) => setUser({ ...user, email: e.target.value })}
+                required
+              />
+            </div>
+            <div className={`input-container ${isFocused.password ? 'active' : ''}`}>
+              <label style={{ color: error.passwordError ? '#b30000' : '' }}>
+                {error.passwordError ? error.passwordError : 'Password'}
+              </label>
+              <input
+                type="password"
+                value={user.password}
+                onFocus={() => handleFocus('password')}
+                onBlur={() => handleBlur('password')}
+                onChange={(e) => setUser({ ...user, password: e.target.value })}
+                required
+              />
+            </div>
+            <div className={`input-container ${isFocused.confirmPassword ? 'active' : ''}`}>
+              <label style={{ color: error.confirmPasswordError ? '#b30000' : '' }}>
+                {error.confirmPasswordError ? error.confirmPasswordError : 'Confirm Password'}
+              </label>
+              <input
+                type="password"
+                value={user.confirmPassword}
+                onFocus={() => handleFocus('confirmPassword')}
+                onBlur={() => handleBlur('confirmPassword')}
+                onChange={(e) => setUser({ ...user, confirmPassword: e.target.value })}
+                required
+              />
+            </div>
+            <button type="submit">Signup</button>
           </form>
           <p>
             Already have an account? <Link to="/login">Log in</Link>
@@ -198,3 +243,4 @@ export function Signup() {
     </>
   )
 }
+

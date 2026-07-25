@@ -8,7 +8,7 @@ export function Navbar() {
 
   return (
     <>
-    <div style={{ 
+    <div style={{
       width: '100%',
       padding: '10px',
       height: '30px',

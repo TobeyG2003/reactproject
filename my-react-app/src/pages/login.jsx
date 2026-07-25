@@ -1,11 +1,121 @@
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import '../App.css'
+import axios from 'axios'
 
 export function Login() {
 
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [user, setUser] = useState({
+    username: '',
+    password: '',
+  });
+
+  const [userdata, setUserdata] = useState({
+    id: '',
+    username: '',
+    display_name: '',
+    email: '',
+    profile_picture_url: '',
+  })
+
+  const [isFocused, setIsFocused] = useState({
+    username: false,
+    password: false,
+  });
+
+  const [error, setError] = useState({
+    usernameError: '',
+    passwordError: '',
+
+  });
+
+  const handleFocus = (field) => {
+    setIsFocused((prev) => ({ ...prev, [field]: true }));
+  }
+
+  const handleBlur = (field) => {
+    if (user[field] === '') {
+      setIsFocused((prev) => ({ ...prev, [field]: false }));
+    }
+  }
+
+  const checkUsernameExists = async (username) => {
+    try {
+      const response = await axios.get(`http://localhost:3000/users?username=${username}`);
+      return response.data.length === 1;
+    } catch (error) {
+      console.error('Error checking username: ', error);
+      return false;
+    }
+  }
+
+  const checkCredentials = async (username, password) => {
+    try {
+      const response = await axios.post(`http://localhost:3000/login`, {
+        username: username,
+        password: password
+      });
+      console.log(response.data);
+      setUserdata({
+        id: response.data.id,
+        username: response.data.username,
+        display_name: response.data.display_name,
+        email: response.data.email,
+        profile_picture_url: response.data.profile_picture_url,
+      });
+      console.log(userdata);
+      return !!response.data;
+    } catch (error) {
+      console.error('Error checking username: ', error);
+      return false;
+    }
+  }
+
+  const validateForm = async () => {
+    const nextErrors = {
+      usernameError: '',
+      passwordError: '',
+    };
+
+    let isValid = true;
+    const trimmedUsername = user.username.trim();
+
+    if (trimmedUsername === '') {
+      nextErrors.usernameError = 'Please enter a username';
+      isValid = false;
+    } else {
+      const doesUsernameExist = await checkUsernameExists(trimmedUsername);
+      if (!doesUsernameExist) {
+        nextErrors.usernameError = 'User does not exist';
+        isValid = false;
+      }
+    }
+
+    const validCredentials = await checkCredentials(trimmedUsername, user.password.trim());
+    if (user.password === '') {
+      nextErrors.passwordError = 'Please enter a password';
+      isValid = false;
+    } else if (!validCredentials) { //check user and pass together
+      nextErrors.passwordError = 'Invalid Password';
+      isValid = false;
+    }
+
+    setError(nextErrors);
+    return isValid;
+  }
+
+  //const login = async
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (await validateForm()) {
+      try {
+        console.log("logged in")
+      } catch (error) {
+        console.error('Error during signup:', error);
+      }
+    }
+  }
 
   return (
     <>
@@ -21,7 +131,7 @@ export function Login() {
       >
         <div className="content">
           <h1>Login</h1>
-          <p>Please enter your credentials to log in.</p>
+          <p>Please fill out the form to sign in.</p>
         </div>
         <div
           style={{
@@ -38,24 +148,37 @@ export function Login() {
             boxShadow: '0 0 5px #005bd3, 0 0 15px #005bd3, 0 0 30px #005bd3'
           }}
         >
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <button>Login</button>
-
+          <form noValidate onSubmit={handleSubmit}>
+            <div className={`input-container ${isFocused.username ? 'active' : ''}`}>
+              <input
+                type="text"
+                value={user.username}
+                onFocus={() => handleFocus('username')}
+                onBlur={() => handleBlur('username')}
+                onChange={(e) => setUser({ ...user, username: e.target.value })}
+                required
+              />
+              <label style={{ color: error.usernameError ? '#b30000' : '' }}>
+                {error.usernameError ? error.usernameError : 'Username (Unique ID)'}
+              </label>
+            </div>
+            <div className={`input-container ${isFocused.password ? 'active' : ''}`}>
+              <label style={{ color: error.passwordError ? '#b30000' : '' }}>
+                {error.passwordError ? error.passwordError : 'Password'}
+              </label>
+              <input
+                type="password"
+                value={user.password}
+                onFocus={() => handleFocus('password')}
+                onBlur={() => handleBlur('password')}
+                onChange={(e) => setUser({ ...user, password: e.target.value })}
+                required
+              />
+            </div>
+            <button type="submit">Signup</button>
+          </form>
           <p>
-            Don't have an account? <Link to="/signup">Sign up</Link>
+            Already have an account? <Link to="/login">Log in</Link>
           </p>
         </div>
       </section>

@@ -368,24 +368,20 @@ app.get("/", (req, res) => {
 app.get("/users", (req, res) => {
   const { username, email } = req.query;
 
-  // 1. Fetch by specific username
   if (username) {
     const q = "SELECT id FROM users WHERE username = ?";
-    // REMOVED 'return' from before db.query
     db.query(q, [username], (err, data) => {
       if (err) {
         console.error("Failed search users: ", err.message);
         return res.status(500).json({ error: "Unable to check usernames." });
       }
-      return res.json(data); // This return safely stops the callback execution
+      return res.json(data); 
     });
-    return; // This return ensures the rest of the GET route doesn't run
+    return;
   }
 
-  // 2. Fetch by specific email
   if (email) {
     const q = "SELECT id FROM users WHERE email = ?";
-    // REMOVED 'return' from before db.query
     db.query(q, [email], (err, data) => {
       if (err) {
         console.error("Failed search emails: ", err.message);
@@ -396,7 +392,6 @@ app.get("/users", (req, res) => {
     return;
   }
 
-  // 3. Fallback: Fetch all users if no specific query params were provided
   const q = "SELECT * FROM users";
   db.query(q, (err, data) => {
     if (err) {
@@ -404,6 +399,27 @@ app.get("/users", (req, res) => {
       return res.status(500).json({ error: "Unable to retrieve users." });
     }
     return res.json(data);
+  });
+});
+
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+    if (!username || !password) {
+    return res.status(400).json({ error: "Username and password are required." });
+  }
+  const q = "SELECT id, username, display_name, email, profile_picture_url FROM users WHERE username = ? AND password = ?";
+
+  db.query(q, [username, password], (err, data) => {
+    if (err) {
+      console.error("Login database error: ", err.message);
+      return res.status(500).json({ error: "An error occurred during login." });
+    }
+
+    if (data.length === 0) {
+      return res.status(401).json({ error: "Invalid username or password." });
+    }
+
+    return res.json(data[0]);
   });
 });
 /*app.get("/users", (req, res) => {

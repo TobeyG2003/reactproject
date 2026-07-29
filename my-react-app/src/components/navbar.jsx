@@ -3,6 +3,7 @@ import '../App.css'
 import { useState } from "react";
 import { AuthContext } from '../AuthContext'
 import { useContext } from 'react';
+import { CgProfile } from "react-icons/cg";
 
 export function Navbar() {
 
@@ -13,8 +14,9 @@ export function Navbar() {
     <>
     <div style={{
       width: '100%',
+      boxSizing: 'border-box',
       padding: '10px',
-      height: '30px',
+      height: '40px',
       display: 'flex', 
       flexDirection: 'row', 
       gap: '16px',
@@ -24,6 +26,11 @@ export function Navbar() {
       backgroundImage: 'linear-gradient(to bottom, #1b357a 20%, #242424 140%)',
       borderBottom: '1px solid #2a334b',
     }}>
+      <div
+      style={{ marginRight: 'auto', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}
+    >
+      <p>React Forum</p>
+    </div>
       <Link to="/" className={openPage === 'page1' ? "navbarLinkSelected" : "navbarLink"}
         onClick={() => setOpenPage('page1')}
       >
@@ -49,10 +56,30 @@ export function Navbar() {
       >
         Signup
       </Link>
+      <Link className='navbarLink' onClick={logoutUser}>
+        Logout
+      </Link>
       {userdata ? (
-        <><p>welcome {userdata.display_name}</p></>
+        <div
+          style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}
+          >
+          <p>welcome {userdata.display_name}</p>
+          {userdata.profile_picture_url ? 
+            (<img 
+              src={'data:image/png;base64,'+userdata.profile_picture_url} 
+              alt="Profile" 
+              style={{ width: '40px', height: '40px', borderRadius: '50%' }} 
+            />
+            ): (
+              <CgProfile
+              style={{ width: '40px', height: '40px', borderRadius: '50%' }}  />
+            )}
+        </div>
       ) : (
-        <p>no user</p>
+        <div
+        style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
+          <p>no user</p>
+        </div>
       )}
       </div>
     </>

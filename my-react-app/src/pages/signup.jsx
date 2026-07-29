@@ -1,9 +1,12 @@
-﻿import { Link } from 'react-router-dom'
+﻿import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import '../App.css'
 import axios from 'axios'
 
 export function Signup() {
+
+  const navigate = useNavigate();
+
   const [user, setUser] = useState({
     username: '',
     displayName: '',
@@ -127,8 +130,8 @@ export function Signup() {
           email: user.email.trim(),
           password: user.password.trim()
         };
-
         await axios.post('http://localhost:3000/users', payload);
+        navigate('/login');
       } catch (error) {
         console.error('Error during signup:', error);
       }

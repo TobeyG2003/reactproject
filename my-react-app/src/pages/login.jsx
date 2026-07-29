@@ -1,22 +1,27 @@
-import { Link } from 'react-router-dom'
-import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useState, useContext  } from 'react'
 import '../App.css'
 import axios from 'axios'
+import { AuthContext } from '../AuthContext'
 
 export function Login() {
+
+  const { loginUser } = useContext(AuthContext);
+
+  const navigate = useNavigate();
 
   const [user, setUser] = useState({
     username: '',
     password: '',
   });
 
-  const [userdata, setUserdata] = useState({
+  /*const [userdata, setUserdata] = useState({
     id: '',
     username: '',
     display_name: '',
     email: '',
     profile_picture_url: '',
-  })
+  })*/
 
   const [isFocused, setIsFocused] = useState({
     username: false,
@@ -28,6 +33,8 @@ export function Login() {
     passwordError: '',
 
   });
+
+  let verifiedPayload = null;
 
   const handleFocus = (field) => {
     setIsFocused((prev) => ({ ...prev, [field]: true }));
@@ -55,16 +62,17 @@ export function Login() {
         username: username,
         password: password
       });
-      console.log(response.data);
-      setUserdata({
+      if (response.data) {
+      verifiedPayload = {
         id: response.data.id,
         username: response.data.username,
         display_name: response.data.display_name,
         email: response.data.email,
         profile_picture_url: response.data.profile_picture_url,
-      });
-      console.log(userdata);
-      return !!response.data;
+      };
+      return true;
+    }
+      return false;
     } catch (error) {
       console.error('Error checking username: ', error);
       return false;
@@ -111,6 +119,8 @@ export function Login() {
     if (await validateForm()) {
       try {
         console.log("logged in")
+        loginUser(verifiedPayload);
+        navigate('/');
       } catch (error) {
         console.error('Error during signup:', error);
       }
@@ -175,7 +185,7 @@ export function Login() {
                 required
               />
             </div>
-            <button type="submit">Signup</button>
+            <button type="submit">Login</button>
           </form>
           <p>
             Already have an account? <Link to="/login">Log in</Link>

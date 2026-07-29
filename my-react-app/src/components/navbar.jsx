@@ -1,10 +1,13 @@
 import { Link } from "react-router-dom";
 import '../App.css'
 import { useState } from "react";
+import { AuthContext } from '../AuthContext'
+import { useContext } from 'react';
 
 export function Navbar() {
 
   const [openPage, setOpenPage] = useState('page1');
+  const { userdata, logoutUser } = useContext(AuthContext);
 
   return (
     <>
@@ -46,6 +49,11 @@ export function Navbar() {
       >
         Signup
       </Link>
+      {userdata ? (
+        <><p>welcome {userdata.display_name}</p></>
+      ) : (
+        <p>no user</p>
+      )}
       </div>
     </>
   )

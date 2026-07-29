@@ -1,4 +1,4 @@
-import './App.css'
+﻿import './App.css'
 import { HashRouter as Router, Routes, Route } from 'react-router-dom'
 import { Page1 } from './pages/page1'
 import { Page2 } from './pages/page2'
@@ -6,9 +6,11 @@ import { Search } from './pages/search'
 import { Login } from './pages/login'
 import { Signup } from './pages/signup'
 import { Layout } from './layout'
+import { AuthProvider } from './AuthContext'
 
 function App() {
   return (
+    <AuthProvider>
     <Router>
       <Routes>
         <Route element={<Layout/>}>
@@ -20,6 +22,7 @@ function App() {
         </Route>
       </Routes>
     </Router>
+    </AuthProvider>
   )
 }
 

@@ -69,6 +69,7 @@ export function Login() {
         display_name: response.data.display_name,
         email: response.data.email,
         profile_picture_url: response.data.profile_picture_url,
+        bio: response.data.bio,
       };
       return true;
     }
@@ -112,8 +113,6 @@ export function Login() {
     return isValid;
   }
 
-  //const login = async
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (await validateForm()) {
@@ -122,7 +121,7 @@ export function Login() {
         loginUser(verifiedPayload);
         navigate('/');
       } catch (error) {
-        console.error('Error during signup:', error);
+        console.error('Error during login:', error);
       }
     }
   }

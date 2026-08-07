@@ -29,6 +29,11 @@ export function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleLogout = () => {
+    logoutUser();
+    navigate('/');
+  }
+
   return (
     <>
     <div style={{
@@ -68,20 +73,19 @@ export function Navbar() {
       {isOpen && (
         <ul className="dropdown-menu" style={{ position: "absolute", listStyle: "none", margin: 0, padding: "5px 0", border: "1px solid #ccc", zIndex: 100 }}>
             <li 
-              onClick={() => handleOptionClick(option)}
+              onClick={() => setIsOpen(false)}
               style={{ padding: "8px 16px", }}
             >
               <Link to="/profilesettings" className={currentPath === '/profilesettings' ? "navbarLinkSelected" : "navbarLink"}
-        onClick={() => setOpenPage('search')}
       >
         Profile Settings
       </Link>
             </li>
             <li 
-              onClick={() => handleOptionClick(option)}
+              onClick={() => setIsOpen(false)}
               style={{ padding: "8px 16px",}}
             >
-              <Link className='navbarLink' onClick={logoutUser}>
+              <Link className='navbarLink' onClick={handleLogout}>
         Logout
       </Link>
             </li>
@@ -93,7 +97,8 @@ export function Navbar() {
             (<img class = "pfp"
               src={'data:image/png;base64,'+userdata.profile_picture_url} 
               alt="Profile" 
-              style={{ width: '35px', height: '35px', borderRadius: '50%' }} 
+              style={{ width: '35px', height: '35px', borderRadius: '50%' }}
+              onClick = {() => navigate('/profile')} 
             />
             ): (
               <div className='pfp' onClick={() => navigate('/profile')}><CgProfile
@@ -105,12 +110,10 @@ export function Navbar() {
         <div
         style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
           <Link to="/login" className={currentPath === '/login' ? "navbarLinkSelected" : "navbarLink"}
-        onClick={() => setOpenPage('login')}
       >
         Login
       </Link>
-      <Link to="/signup" className={currentPath === 'signup' ? "navbarLinkSelected" : "navbarLink"}
-        onClick={() => setOpenPage('signup')}
+      <Link to="/signup" className={currentPath === '/signup' ? "navbarLinkSelected" : "navbarLink"}
       >
         Signup
       </Link>

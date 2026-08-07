@@ -11,7 +11,8 @@ const db = mysql.createConnection({
   database: "mydatabase",
 });
 
-app.use(express.json());
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 app.use(cors());
 
 db.connect((err) => {
@@ -402,12 +403,65 @@ app.get("/users", (req, res) => {
   });
 });
 
+app.put("/users/:id", (req, res) => {
+  const userId = req.params.id;
+  const { username, display_name, email, password, profile_picture_url, bio } = req.body;
+
+  const updates = [];
+  const values = [];
+
+  if (username !== undefined) {
+    updates.push("username = ?");
+    values.push(username);
+  }
+
+  if (display_name !== undefined) {
+    updates.push("display_name = ?");
+    values.push(display_name);
+  }
+
+  if (email !== undefined) {
+    updates.push("email = ?");
+    values.push(email);
+  }
+
+  if (password !== undefined && password !== "") {
+    updates.push("password = ?");
+    values.push(password);
+  }
+
+  if (profile_picture_url !== undefined) {
+    updates.push("profile_picture_url = ?");
+    values.push(profile_picture_url);
+  }
+
+  if (bio !== undefined) {
+    updates.push("bio = ?");
+    values.push(bio);
+  }
+
+  if (updates.length === 0) {
+    return res.status(400).json({ error: "No update fields provided." });
+  }
+
+  values.push(userId);
+  const q = `UPDATE users SET ${updates.join(", ")} WHERE id = ?`;
+
+  db.query(q, values, (err, data) => {
+    if (err) {
+      console.error("Failed to update user:", err.message);
+      return res.status(500).json({ error: "Unable to update user in the database." });
+    }
+    return res.json({ message: "User updated successfully!" });
+  });
+});
+
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
     if (!username || !password) {
     return res.status(400).json({ error: "Username and password are required." });
   }
-  const q = "SELECT id, username, display_name, email, profile_picture_url FROM users WHERE username = ? AND password = ?";
+  const q = "SELECT id, username, display_name, email, profile_picture_url, bio FROM users WHERE username = ? AND password = ?";
 
   db.query(q, [username, password], (err, data) => {
     if (err) {

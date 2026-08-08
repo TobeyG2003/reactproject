@@ -308,3 +308,15 @@ button {
   border-color: #ffffff;
   cursor: pointer;
 }
+
+.forumpost {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background-color: #202020;
+  width: 70%;
+  gap: 30px;
+}

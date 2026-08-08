@@ -94,7 +94,7 @@ export function Navbar() {
     </div>
           <p style={{color: '#ffffff'}}>Welcome, {userdata.display_name}!</p>
           {userdata.profile_picture_url ? 
-            (<img class = "pfp"
+            (<img className = "pfp"
               src={'data:image/png;base64,'+userdata.profile_picture_url} 
               alt="Profile" 
               style={{ width: '35px', height: '35px', borderRadius: '50%' }}

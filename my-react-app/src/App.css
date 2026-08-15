@@ -320,3 +320,15 @@ button {
   width: 70%;
   gap: 30px;
 }
+
+.comment {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background-color: #202020;
+  width: 70%;
+  gap: 10px;
+}

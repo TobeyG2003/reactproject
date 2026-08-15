@@ -1,12 +1,15 @@
 import '../App.css'
 import axios from 'axios'
+import { use } from 'react';
 import { useEffect, useState } from 'react'
 import { CgProfile } from "react-icons/cg";
 import { FaHeart } from "react-icons/fa";
+import TimeAgo from 'timeago-react';
+import { Link, useNavigate } from 'react-router-dom'
 
-
-export function Forumpost() {
+export function Forumpost(forumdata, isCard = true) {
   const [post, setPost] = useState(null);
+  const { id } = useParams();
 
   useEffect(() => {
     // Fetch forum post data
@@ -31,7 +34,7 @@ export function Forumpost() {
             overflow: 'hidden',
             textOverflow: 'ellipsis'
            }}
-          >Sample TitleSample TitleSample TitleSample TitleSample TitleSample TitleSample TitleSample TitleSample TitleSample TitleSample TitleSample TitleSample TitleSample Title</h2>
+          >{id}Sample TitleSample TitleSample TitleSample TitleSample TitleSample TitleSample TitleSample TitleSample TitleSample TitleSample TitleSample TitleSample TitleSample Title</h2>
           <p
           style = {{
             display: '-webkit-box',
@@ -61,7 +64,7 @@ export function Forumpost() {
             <p style={{color: '#ffffff', fontSize: '14px', marginTop: '10px'}}>Date</p>
             <div 
             style={{ display: 'flex', gap: '10px', flexDirection: 'row', marginLeft: 'auto' }}>
-                <FaHeart style={{color: '#ffffff', width: '30px', height: '30px', marginTop: '8px'}} />
+                <FaHeart style={{color: '#ffffff', width: '20px', height: '20px', marginTop: '12px'}} />
                 <p style={{color: '#ffffff', fontSize: '14px', marginTop: '10px',}}>Likes</p>
             </div>
           </div>

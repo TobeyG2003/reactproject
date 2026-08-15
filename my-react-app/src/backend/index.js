@@ -56,6 +56,7 @@ db.connect((err) => {
       id INT AUTO_INCREMENT PRIMARY KEY,
       user_id INT NOT NULL,
       forum_id INT NOT NULL,
+      status VARCHAR(20) NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (forum_id) REFERENCES forums(id) ON DELETE CASCADE,
       UNIQUE KEY unique_moderator (user_id, forum_id)
@@ -110,7 +111,10 @@ db.connect((err) => {
       id INT AUTO_INCREMENT PRIMARY KEY,
       post_id INT NOT NULL,
       user_id INT NOT NULL,
+      reply_total INT DEFAULT 0,
+      reply_chain_count INT DEFAULT 0,
       parent_comment_id INT DEFAULT NULL,
+      reply_user_id INT DEFAULT NULL,
       content TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -528,6 +532,167 @@ app.post("/users", (req, res) => {
     return res.json({ message: "User created successfully!", userId: data.insertId });
   });
 });
+
+app.post("/fetchcomments", (req, res) => {
+  const { postId } = req.body;
+
+  const q = "SELECT * FROM comments WHERE postid = ? and parent_comment_id IS NULL ORDER BY created_at ASC";
+
+  db.query(q, [postId], (err, data) => {
+    if (err) {
+      console.error("Failed to fetch comments:", err.message);
+      return res.status(500).json({ error: "Unable to fetch comments from the database." });
+    }
+    return res.json(data);
+  });
+});
+
+app.post("/fetchreplies", (req, res) => {
+  const { commentId } = req.body;
+
+  const q = "SELECT * FROM comments WHERE parent_comment_id = ? ORDER BY created_at ASC";
+
+  db.query(q, [commentId], (err, data) => {
+    if (err) {
+      console.error("Failed to fetch replies:", err.message);
+      return res.status(500).json({ error: "Unable to fetch replies from the database." });
+    }
+    return res.json(data);
+  });
+});
+
+app.post("/addcomment", (req, res) => {
+  const { postId, userId, content, parentCommentId } = req.body;
+
+  const q = "INSERT INTO comments (post_id, user_id, content, parent_comment_id) VALUES (?, ?, ?, ?)";
+
+  db.query(q, [postId, userId, content, parentCommentId || null], (err, data) => {
+    if (err) {
+      console.error("Failed to add comment:", err.message);
+      return res.status(500).json({ error: "Unable to add comment to the database." });
+    }
+    return res.json({ message: "Comment added successfully!", commentId: data.insertId });
+  });
+});
+
+app.post("/fetchUser", (req, res) => {
+  const { userId } = req.body;
+
+  const q = "SELECT username, display_name, bio, profile_picture_url, created_at, private FROM users WHERE id = ?";
+
+  db.query(q, [userId], (err, data) => {
+    if (err) {
+      console.error("Failed to fetch user:", err.message);
+      return res.status(500).json({ error: "Unable to fetch user from the database." });
+    }
+    return res.json(data[0]);
+  });
+});
+
+app.post("/checkmod", (req, res) => {
+  const { userId, forumId } = req.body;
+
+  const q = "SELECT status FROM moderators WHERE user_id = ? AND forum_id = ?";
+
+  db.query(q, [userId, forumId], (err, data) => {
+    if (err) {
+      console.error("Failed to check moderator status:", err.message);
+      return res.status(500).json({ error: "Unable to check moderator status in the database." });
+    }
+    return res.json({ isModerator: data.length > 0, status: data[0]?.status || null });
+  });
+});
+
+app.post("/checkfriend", (req, res) => {
+  const { userId, friendId } = req.body;
+
+  const q = "SELECT * FROM friends WHERE user_id = ? AND friend_id = ?";
+
+  db.query(q, [userId, friendId], (err, data) => {
+    if (err) {
+      console.error("Failed to check friendship status:", err.message);
+      return res.status(500).json({ error: "Unable to check friendship status in the database." });
+    }
+    return res.json({ isFriend: data.length > 0 });
+  });
+});
+
+app.post("/fetchforumdata", (req, res) => {
+  const { forumId } = req.body;
+
+  const q = "SELECT * FROM forums WHERE id = ?";
+
+  db.query(q, [forumId], (err, data) => {
+    if (err) {
+      console.error("Failed to fetch forum:", err.message);
+      return res.status(500).json({ error: "Unable to fetch forum from the database." });
+    }
+    return res.json(data[0]);
+  });
+});
+
+app.post("/fetchpostdata", (req, res) => {
+  const { postId } = req.body;
+
+  const q = "SELECT * FROM posts WHERE id = ?";
+
+  db.query(q, [postId], (err, data) => {
+    if (err) {
+      console.error("Failed to fetch post:", err.message);
+      return res.status(500).json({ error: "Unable to fetch post from the database." });
+    }
+    return res.json(data[0]);
+  });
+});
+
+app.post("/checkLiked", (req, res) => {
+  const { userId, postId, commentId } = req.body;
+
+  const q = "SELECT * FROM likes WHERE user_id = ? AND (post_id = ? OR comment_id = ?)";
+
+  db.query(q, [userId, postId || null, commentId || null], (err, data) => {
+    if (err) {
+      console.error("Failed to check like status:", err.message);
+      return res.status(500).json({ error: "Unable to check like status in the database." });
+    }
+    return res.json({ isLiked: data.length > 0 });
+  });
+});
+
+app.post("/toggleLike", (req, res) => {
+  const { userId, commentId, postId } = req.body;
+
+  const checkLikeQuery = "SELECT * FROM likes WHERE user_id = ? AND (comment_id = ? OR post_id = ?)";
+  const insertLikeQuery = "INSERT INTO likes (user_id, comment_id, post_id) VALUES (?, ?, ?)";
+  const deleteLikeQuery = "DELETE FROM likes WHERE user_id = ? AND comment_id = ? AND post_id = ?";
+  const updateCommentLikesQuery = "UPDATE comments SET likes_count = likes_count + ? WHERE id = ?";
+
+  db.query(checkLikeQuery, [userId, commentId || null, postId || null], (err, data) => {
+    if (err) {
+      console.error("Failed to check like status:", err.message);
+      return res.status(500).json({ error: "Unable to check like status in the database." });
+    }
+
+    if (data.length > 0) {
+      // User has already liked the comment, so remove the like
+      db.query(deleteLikeQuery, [userId, commentId || null, postId || null], (err) => {
+        if (err) {
+          console.error("Failed to remove like:", err.message);
+          return res.status(500).json({ error: "Unable to remove like from the database." });
+        }
+      });
+    } else {
+      // User has not liked the comment, so add the like
+      db.query(insertLikeQuery, [userId, commentId || null, postId || null], (err) => {
+        if (err) {
+          console.error("Failed to add like:", err.message);
+          return res.status(500).json({ error: "Unable to add like to the database." });
+        }
+      });
+    }
+  });
+});
+
 app.listen(3000, () => {
   console.log("Server is running on port 3000!");
 });

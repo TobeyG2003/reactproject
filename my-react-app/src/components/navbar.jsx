@@ -58,7 +58,7 @@ export function Navbar() {
       <Link to="/" className={currentPath === '/' ? "navbarLinkSelected" : "navbarLink"}>
         Go to Page 1
       </Link>
-      <Link to="/page2" className={currentPath === '/page2' ? "navbarLinkSelected" : "navbarLink"}>
+      <Link to="/page2/480" className={currentPath === '/page2' ? "navbarLinkSelected" : "navbarLink"}>
         Go to Page 2
       </Link>
       <Link to="/search" className={currentPath === '/search' ? "navbarLinkSelected" : "navbarLink"}>

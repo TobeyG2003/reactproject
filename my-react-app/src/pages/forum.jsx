@@ -2,13 +2,13 @@ import { Link } from 'react-router-dom'
 import { Forumpost } from '../components/forumpost'
 import { Comment } from '../components/comment'
 
-export function Page2() {
+export function Forum() {
   return (
     <>
-      <section id="page2">
+      <section id="forum">
         <div className="content">
-          <h1>Page 2</h1>
-          <p>This is the content of Page 2.</p>
+          <h1>Forum</h1>
+          <p>This is the content of the Forum page.</p>
           <Forumpost />
           <Comment/>
         </div>

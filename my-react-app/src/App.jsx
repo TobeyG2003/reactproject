@@ -1,7 +1,7 @@
 ﻿import './App.css'
 import { HashRouter as Router, Routes, Route } from 'react-router-dom'
 import { Page1 } from './pages/page1'
-import { Page2 } from './pages/page2'
+import { Forum } from './pages/Forum'
 import { Search } from './pages/search'
 import { Login } from './pages/login'
 import { Signup } from './pages/signup'
@@ -17,12 +17,12 @@ function App() {
       <Routes>
         <Route element={<Layout/>}>
           <Route path="/" element={<Page1/>} />
-          <Route path="/page2" element={<Page2/>} />
+          <Route path="/forum/:id" element={<Forum/>} />
           <Route path="/search" element={<Search/>} />
           <Route path="/login" element={<Login/>} />
           <Route path="/signup" element={<Signup/>} />
           <Route path="/profilesettings" element={<ProfileSettings/>} />
-          <Route path="/profile" element={<Profile/>} />
+          <Route path="/profile/:id" element={<Profile/>} />
         </Route>
       </Routes>
     </Router>

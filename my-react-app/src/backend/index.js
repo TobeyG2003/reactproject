@@ -91,6 +91,7 @@ db.connect((err) => {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       likes_count INT DEFAULT 0,
       image_url MEDIUMTEXT,
+      replies_num INT DEFAULT 0,
       FOREIGN KEY (forum_id) REFERENCES forums(id) ON DELETE CASCADE,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )

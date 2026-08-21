@@ -35,7 +35,7 @@ export function Comment( {commentdata, isCard = true} ) {
 
   const toggleLike = async () => {
     try {
-      const response = await axios.post('http://localhost:3000/toggleLikeComment', {
+      const response = await axios.post('http://localhost:3000/toggleLike', {
         userId: comments.userId,
         commentId: comments.commentId,
       });
@@ -140,11 +140,19 @@ export function Comment( {commentdata, isCard = true} ) {
               style={{color: '#ffffff', width: '30px', height: '30px', borderRadius: '50%' }}  />
               </div>
             )}
-                <p style={{ color: '#ffffff', fontSize: '14px' }}>{comments.replyUsername || 'Unavailable'}</p>
+                <p style={{ color: '#ffffff', fontSize: '14px' }} onClick={() => navigate(`/profile/${comments.userId}`)}>{comments.username || 'Unavailable'}</p>
                 <p><TimeAgo 
                     datetime={comments.created_at?.replace(' ', 'T') || ''} 
                     locale="en_US" 
                 /></p>
+                {comments.replyChain > 0 && (
+                    <>
+                    <div>
+                        replying to 
+                    </div>
+                    <div>{comments.replyUsername}</div>
+                    </>
+                 )}
                 { isCard &&
                 <div
                     style={{

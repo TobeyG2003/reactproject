@@ -1,12 +1,11 @@
 import '../App.css'
 import axios from 'axios'
-import { use } from 'react';
 import { useEffect, useState } from 'react'
 import { CgProfile } from "react-icons/cg";
 import { FaHeart } from "react-icons/fa";
 import { BiCommentDetail } from "react-icons/bi";
 import TimeAgo from 'timeago-react';
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 
 export function Forumpost({postdata, isCard = true}) {
   const [post, setPost] = useState({
@@ -28,6 +27,7 @@ export function Forumpost({postdata, isCard = true}) {
   });
 
   const { id } = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (postdata) {

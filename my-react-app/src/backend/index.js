@@ -537,7 +537,7 @@ app.post("/users", (req, res) => {
 app.post("/fetchcomments", (req, res) => {
   const { postId } = req.body;
 
-  const q = "SELECT * FROM comments WHERE postid = ? and parent_comment_id IS NULL ORDER BY created_at ASC";
+  const q = "SELECT * FROM comments WHERE post_id = ? and parent_comment_id IS NULL ORDER BY created_at ASC";
 
   db.query(q, [postId], (err, data) => {
     if (err) {

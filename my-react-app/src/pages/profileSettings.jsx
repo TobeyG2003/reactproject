@@ -173,7 +173,8 @@ export function ProfileSettings() {
 
     try {
       const base64 = await convertToBase64(file);
-      setNewUser((prev) => ({ ...prev, profile_picture_url: base64 }));
+      const rawBase64 = base64.split(',')[1];
+      setNewUser((prev) => ({ ...prev, profile_picture_url: rawBase64 }));
       setEdit((prev) => ({ ...prev, profile_picture_url: true }));
     } catch (error) {
       console.error("Error converting file:", error);

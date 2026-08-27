@@ -1,16 +1,18 @@
 import '../App.css'
 import axios from 'axios'
-import { use } from 'react';
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
 import { CgProfile } from "react-icons/cg";
 import { FaHeart } from "react-icons/fa";
 import TimeAgo from 'timeago-react';
 import { Link, useNavigate } from 'react-router-dom'
+import { AuthContext } from '../AuthContext'
 
 
 export function Comment( {commentdata, isCard = true} ) {
 
     const navigate = useNavigate();
+
+    const { userdata } = useContext(AuthContext)
 
     const [comments, setComments] = useState({
     commentId: commentdata?.id || '',
@@ -56,7 +58,7 @@ export function Comment( {commentdata, isCard = true} ) {
   const toggleLike = async () => {
     try {
       const response = await axios.post('http://localhost:3000/toggleLike', {
-        userId: comments.userId,
+        userId: userdata?.id,
         commentId: comments.commentId,
       });
       setComments((prevComments) => ({
@@ -87,10 +89,10 @@ export function Comment( {commentdata, isCard = true} ) {
     }
 
     async function fetchIsLiked() {
-      if (!comments.userId || !comments.commentId) return;
+      if (!userdata?.id || !comments.commentId) return;
       try {
         const response = await axios.post('http://localhost:3000/checkLiked', {
-          userId: comments.userId,
+          userId: userdata.id,
           commentId: comments.commentId,
         });
         setComments((prevComments) => ({ ...prevComments, isLiked: response.data.isLiked }));
@@ -127,11 +129,12 @@ export function Comment( {commentdata, isCard = true} ) {
     fetchUserData();
     fetchForumData();
     fetchIsLiked();
-  }, [comments.userId, comments.commentId, comments.replyUserId, comments.forumId]);
+  }, [comments.userId, comments.commentId, comments.replyUserId, comments.forumId, userdata?.id]);
 
     return (
         <div className="comment"
             style={{
+              ...(!isCard && { border: '0px', backgroundColor: 'transparent', borderBottom: '1px solid', borderRadius: '0'})
             }}>
             <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', }}>
                 {comments.profilePicture ? 
@@ -183,7 +186,7 @@ export function Comment( {commentdata, isCard = true} ) {
                 </div>
                 }
             </div>
-            <p style={{ color: '#ffffff', fontSize: '14px' }}>{comments.postContent || 'Unavailable'}</p>
+            <p style={{ color: '#ffffff', fontSize: '14px', marginRight: 'auto'}}>{comments.postContent || 'Unavailable'}</p>
             {comments.postPicture && (
                 <img 
                     src={'data:image/png;base64,'+comments.postPicture}
@@ -195,7 +198,8 @@ export function Comment( {commentdata, isCard = true} ) {
                 maxHeight: '200px', 
                 objectFit: 'contain',
                 borderRadius: '5%',
-                border: '1px solid #ffffff',}}
+                border: '1px solid #ffffff',
+                alignSelf: 'center'}}
                 />
             )}
             <div style={{ display: 'flex', gap: '10px', flexDirection: 'row', marginLeft: 'auto' }}>

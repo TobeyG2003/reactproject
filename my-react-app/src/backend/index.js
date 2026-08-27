@@ -563,11 +563,11 @@ app.post("/fetchreplies", (req, res) => {
 });
 
 app.post("/addcomment", (req, res) => {
-  const { postId, userId, content, parentCommentId } = req.body;
+  const { postId, userId, content, imageurl, parentCommentId, } = req.body;
 
-  const q = "INSERT INTO comments (post_id, user_id, content, parent_comment_id) VALUES (?, ?, ?, ?)";
+  const q = "INSERT INTO comments (post_id, user_id, content, image_url, parent_comment_id) VALUES (?, ?, ?, ?, ?)";
 
-  db.query(q, [postId, userId, content, parentCommentId || null], (err, data) => {
+  db.query(q, [postId, userId, content, imageurl, parentCommentId || null], (err, data) => {
     if (err) {
       console.error("Failed to add comment:", err.message);
       return res.status(500).json({ error: "Unable to add comment to the database." });
@@ -663,10 +663,13 @@ app.post("/checkLiked", (req, res) => {
 app.post("/toggleLike", (req, res) => {
   const { userId, commentId, postId } = req.body;
 
+  if (!userId || (!commentId && !postId)) {
+    return res.status(400).json({ error: "userId and either commentId or postId are required." });
+  }
+
   const checkLikeQuery = "SELECT * FROM likes WHERE user_id = ? AND (comment_id = ? OR post_id = ?)";
   const insertLikeQuery = "INSERT INTO likes (user_id, comment_id, post_id) VALUES (?, ?, ?)";
-  const deleteLikeQuery = "DELETE FROM likes WHERE user_id = ? AND comment_id = ? AND post_id = ?";
-  const updateCommentLikesQuery = "UPDATE comments SET likes_count = likes_count + ? WHERE id = ?";
+  const deleteLikeQuery = "DELETE FROM likes WHERE user_id = ? AND (comment_id = ? OR post_id = ?)";
 
   db.query(checkLikeQuery, [userId, commentId || null, postId || null], (err, data) => {
     if (err) {
@@ -674,21 +677,53 @@ app.post("/toggleLike", (req, res) => {
       return res.status(500).json({ error: "Unable to check like status in the database." });
     }
 
+    const isComment = !!commentId;
+    const targetId = commentId || postId;
+
     if (data.length > 0) {
-      // User has already liked the comment, so remove the like
-      db.query(deleteLikeQuery, [userId, commentId || null, postId || null], (err) => {
+      // remove like: delete the exact like row
+      const deleteQuery = isComment ? "DELETE FROM likes WHERE user_id = ? AND comment_id = ?" : "DELETE FROM likes WHERE user_id = ? AND post_id = ?";
+      db.query(deleteQuery, [userId, targetId], (err) => {
         if (err) {
           console.error("Failed to remove like:", err.message);
           return res.status(500).json({ error: "Unable to remove like from the database." });
         }
+
+        const updateQuery = isComment ? "UPDATE comments SET likes_count = GREATEST(likes_count - 1, 0) WHERE id = ?" : "UPDATE posts SET likes_count = GREATEST(likes_count - 1, 0) WHERE id = ?";
+        db.query(updateQuery, [targetId], (err) => {
+          if (err) console.error("Failed to decrement likes_count:", err.message);
+
+          const getCountQuery = isComment ? "SELECT likes_count AS likes FROM comments WHERE id = ?" : "SELECT likes_count AS likes FROM posts WHERE id = ?";
+          db.query(getCountQuery, [targetId], (err, rows) => {
+            if (err) {
+              console.error("Failed to fetch likes count:", err.message);
+              return res.status(500).json({ error: "Unable to fetch likes count." });
+            }
+            return res.json({ isLiked: false, likes: rows[0]?.likes || 0 });
+          });
+        });
       });
     } else {
-      // User has not liked the comment, so add the like
+      // add like
       db.query(insertLikeQuery, [userId, commentId || null, postId || null], (err) => {
         if (err) {
           console.error("Failed to add like:", err.message);
           return res.status(500).json({ error: "Unable to add like to the database." });
         }
+
+        const updateQuery = isComment ? "UPDATE comments SET likes_count = likes_count + 1 WHERE id = ?" : "UPDATE posts SET likes_count = likes_count + 1 WHERE id = ?";
+        db.query(updateQuery, [targetId], (err) => {
+          if (err) console.error("Failed to increment likes_count:", err.message);
+
+          const getCountQuery = isComment ? "SELECT likes_count AS likes FROM comments WHERE id = ?" : "SELECT likes_count AS likes FROM posts WHERE id = ?";
+          db.query(getCountQuery, [targetId], (err, rows) => {
+            if (err) {
+              console.error("Failed to fetch likes count:", err.message);
+              return res.status(500).json({ error: "Unable to fetch likes count." });
+            }
+            return res.json({ isLiked: true, likes: rows[0]?.likes || 0 });
+          });
+        });
       });
     }
   });

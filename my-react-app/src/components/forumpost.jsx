@@ -6,6 +6,8 @@ import { FaHeart } from "react-icons/fa";
 import { BiCommentDetail } from "react-icons/bi";
 import TimeAgo from 'timeago-react';
 import { Link, useParams, useNavigate } from 'react-router-dom'
+import { useContext } from 'react'
+import { AuthContext } from '../AuthContext'
 
 export function Forumpost({postdata, isCard = true}) {
   const [post, setPost] = useState({
@@ -47,10 +49,13 @@ export function Forumpost({postdata, isCard = true}) {
     }
   }, [postdata]);
 
+  const { userdata } = useContext(AuthContext)
+
   const toggleLike = async () => {
+    if (!userdata?.id) return console.warn('User must be logged in to like');
     try {
       const response = await axios.post('http://localhost:3000/toggleLike', {
-        userId: post.userId,
+        userId: userdata.id,
         postId: post.postId,
       });
       setPost((prevPost) => ({
@@ -80,10 +85,10 @@ export function Forumpost({postdata, isCard = true}) {
     }
 
     async function fetchIsLiked() {
-      if (!post.userId || !post.postId) return;
+      if (!userdata?.id || !post.postId) return;
       try {
         const response = await axios.post('http://localhost:3000/checkLiked', { 
-          userId: post.userId, 
+          userId: userdata.id, 
           postId: post.postId, 
         });
         setPost((prevPost) => ({ ...prevPost, isLiked: response.data.isLiked }));
@@ -109,7 +114,7 @@ export function Forumpost({postdata, isCard = true}) {
     fetchUserData();
     fetchForumData();
     fetchIsLiked();
-  }, [post.userId, post.postId, post.forumId]);
+  }, [post.userId, post.postId, post.forumId, userdata?.id]);
 
   return (
     <div className="forumpost">
@@ -150,7 +155,7 @@ export function Forumpost({postdata, isCard = true}) {
       <TimeAgo datetime={post.postDate ? post.postDate.replace(" ", "T") : ""} locale="en_US" />
     </p>
   </div>
-    {isCard && (
+    {!isCard && (
       <div
         style={{
         display: "flex",
@@ -180,7 +185,9 @@ export function Forumpost({postdata, isCard = true}) {
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
-            textOverflow: 'ellipsis'
+            textOverflow: 'ellipsis',
+            //marginRight: 'auto'
+
            }}
           >{post.postTitle}</h2>
           <p
@@ -189,7 +196,8 @@ export function Forumpost({postdata, isCard = true}) {
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
-            textOverflow: 'ellipsis'
+            textOverflow: 'ellipsis',
+            marginRight: 'auto'
            }}
           >{post.postContent}</p>
           {post.postImage && (

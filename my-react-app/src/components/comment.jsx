@@ -261,7 +261,15 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
                     <div>
                         replying to 
                     </div>
-                    <div>{comments.replyUsername}</div>
+                    <div
+                      className='navbarLink'
+                      style={{
+                        fontSize: '13pt',
+                        cursor: 'pointer',
+                      }}
+                      onClick = {() => navigate(`/profile/${comments.replyUserId}`)} 
+>
+                      {comments.replyUsername}</div>
                     </>
                  )}
                 { isCard &&

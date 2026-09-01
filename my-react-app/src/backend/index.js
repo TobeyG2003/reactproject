@@ -483,6 +483,8 @@ app.put("/users/:id", (req, res) => {
   });
 });
 
+
+
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
     if (!username || !password) {
@@ -588,7 +590,6 @@ app.post("/addcomment", (req, res) => {
   const { postId, userId, content, imageurl, parentCommentId, replychain } = req.body;
 
   if (parentCommentId) {
-    // If this is a reply, fetch parent comment to determine the user being replied to
     const getParent = "SELECT user_id, reply_chain_count FROM comments WHERE id = ?";
     db.query(getParent, [parentCommentId], (err, rows) => {
       if (err) {
@@ -621,7 +622,6 @@ app.post("/addcomment", (req, res) => {
       );
     });
   } else {
-    // Top-level comment on a post
     const q = "INSERT INTO comments (post_id, user_id, content, image_url, parent_comment_id, reply_chain_count) VALUES (?, ?, ?, ?, ?, ?)";
     db.query(
       q,
@@ -711,6 +711,37 @@ app.post("/fetchpostdata", (req, res) => {
     }
     return res.json(data[0]);
   });
+});
+
+app.put('/comments/:id', async (req, res) => {
+  const commentId = req.params.id;
+  const { content, image_url } = req.body;
+
+  if (!content || content.trim() === '') {
+    return res.status(400).json({ error: 'Content cannot be empty.' });
+  }
+
+  try {
+    const sql = `
+      UPDATE comments 
+      SET content = ?, image_url = ? 
+      WHERE id = ?
+    `;
+    
+    const result = await db.execute(sql, [content, image_url, commentId]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Comment not found.' });
+    }
+
+    res.status(200).json({ 
+      message: 'Comment updated successfully.',
+      updatedComment: { id: commentId, content, image_url }
+    });
+  } catch (error) {
+    console.error('Database error details:', error);
+    res.status(500).json({ error: 'Internal server error while editing comment.' });
+  }
 });
 
 app.post("/checkLiked", (req, res) => {

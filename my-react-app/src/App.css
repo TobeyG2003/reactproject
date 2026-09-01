@@ -326,8 +326,8 @@ button {
   flex-direction: column;
   border: 1px solid #ccc;
   border-radius: 8px;
-  padding: 16px;
-  margin: 0 auto 16px auto;
+  padding: 12px;
+  margin: 0 auto 12px auto;
   background-color: #202020;
   width: 100%;
   gap: 10px;

@@ -20,9 +20,14 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
 
     const fileInputRef = useRef(null);
 
-    const [ viewReplies, setViewReplies ] = useState('false')
+    const [ viewReplies, setViewReplies ] = useState('false') //oops
     const [ addReply, setAddReply ] = useState('null')
     const [ backendReplies, setBackendReplies ] = useState([]); 
+    const [ isEdit, setIsEdit ] = useState(false)
+    const [ editComment, setEditComment ] = useState ({
+      content: '',
+      image: ''
+    })
 
     const handleButtonClick = () => {
     fileInputRef.current.click();
@@ -51,6 +56,18 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
       const base64 = await convertToBase64(file);
       const rawBase64 = base64.split(',')[1];
       setNewComment((prev) => ({ ...prev, image: rawBase64 }));
+    } catch (error) {
+      console.error("Error converting file:", error);
+    }
+  };
+  const handleEditUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      const base64 = await convertToBase64(file);
+      const rawBase64 = base64.split(',')[1];
+      setEditComment((prev) => ({ ...prev, image: rawBase64 }));
     } catch (error) {
       console.error("Error converting file:", error);
     }
@@ -140,6 +157,11 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
         parentCommentId: commentdata.parent_comment_id || null,
         replyUserId: commentdata.reply_user_id || '',
       }));
+      setEditComment((prev) => ({
+        ...prev,
+        content: comments.postContent,
+        image: comments.postPicture
+      }))
       if (comments.replyChain > 8) {
         setComments((prevComments) => ({
         ...prevComments,
@@ -169,6 +191,22 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
       console.error('Error toggling like:', error);
     }
   };
+
+  const addNewEdit = async () => {
+  try {
+    const response = await axios.put(`http://localhost:3000/comments/${comments.commentId}`, {
+      content: editComment.content,
+      image_url: editComment.image,
+    });
+    console.log('Comment updated successfully:', response.data);
+    setComments((prev) => ({ ...prev, postPicture: editComment.image })); 
+    setComments((prev) => ({...prev, postContent: editComment.content}));
+    setIsEdit(false)
+    return response.data;
+  } catch (error) {
+    console.error('Error editing comment', error);
+  }
+};
 
 
   useEffect(() => {
@@ -239,6 +277,75 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
               ...(isReply && { borderColor: '#3a3a3a', borderLeft: '3px dotted #414141', borderBlockEnd: ''}),
               ...(isReply && { transform: `translateX(${Math.min(comments.replySpacing || 0, 8) * 16}px)` }),
             }}>
+            {isEdit ? (
+              <>
+              <h2>Edit Comment</h2>
+              <div style={{ width: '70%', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}> 
+                <textarea 
+                  value={editComment.content} 
+                  onChange={(e) => setNewComment({ ...editComment, content: e.target.value })} 
+                  style={{ width: '100%', height: '150px' }} 
+                />
+                {editComment.image && (
+                  <img 
+                    src={'data:image/png;base64,' + editComment.image}
+                  style={{
+                  marginTop :'10px',
+                  width: '100%',
+                  height: '100%',
+                  maxWidth: '200px', 
+                  maxHeight: '160px', 
+                  objectFit: 'contain',
+                  borderRadius: '5%',
+                  border: '1px solid #ffffff',}}
+              /> )}
+                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: '10px', alignSelf: 'stretch' }}> 
+                  <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}> 
+                    <input
+                      ref = {fileInputRef} 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleEditUpload}
+                      style={{ display: 'none' }}
+                    />
+                    <button onClick={handleButtonClick}> Add Image </button>
+                    { editComment.image &&
+                    <button 
+                      type="button" 
+                      style={{ 
+                        marginLeft: '10px', 
+                        backgroundColor: '#ff0000', 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center' 
+                      }} 
+                      onClick={() => { setEditComment((prev) => ({ ...prev, image: '' })); }}
+                    > 
+                      <FaRegTrashCan size={16} style={{ display: 'block' }} /> 
+                    </button> 
+                    }
+                  </div> 
+                  <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}> 
+                    <button onClick={async () => { await addNewEdit();
+                      }} > 
+                      Submit 
+                    </button> 
+                    <button 
+                      type="button" 
+                      style={{ marginLeft: '10px', backgroundColor: '#ff0000' }} 
+                      onClick={() => {setEditComment((prev) => ({ ...prev, image: comments.postPicture })); 
+                        setEditComment((prev) => ({...prev, content: comments.postContent}));
+                        setIsEdit(false)
+                      }}
+                    > 
+                      Cancel 
+                    </button> 
+                  </div> 
+                </div> 
+              </div>
+              </>
+            ) : (
+            <>
             <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center', }}>
                 {comments.profilePicture ? 
             (<img className = "pfp"
@@ -346,6 +453,16 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
             </button>
             }</>)}
             <div style={{ display: 'flex', gap: '10px', flexDirection: 'row', marginLeft: 'auto' }}>
+              {userdata.id == comments.userId && (
+                <button
+                  style = {{ height: '25px', marginTop: '10px', marginLeft: '10px', alignSelf: 'center'}}
+                  onClick = {() => {setViewReplies(true), setAddReply(false), setIsEdit(true),
+                    setNewComment((prev) => ({ ...prev, image: '' })); 
+                    setNewComment((prev) => ({...prev, content: ''}));
+                    setNewComment((prev) => ({...prev, isAdd: false}));
+                   }}
+                >Edit</button>
+              )}
                 <FaHeart
                     onClick={toggleLike}
                     style={{ color: comments.isLiked ? '#ff0000' : '#ffffff', width: '20px', height: '20px', marginTop: '12px', cursor: 'pointer' }} />
@@ -421,6 +538,7 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
                 </div> 
               </div>
             }
+            </>)}
         </div>
         {backendReplies.length > 0 && !viewReplies && (
           backendReplies.map((comment) => (

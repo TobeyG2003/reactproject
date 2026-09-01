@@ -220,7 +220,7 @@ export function Forumpost({postdata, isCard = true}) {
             style={{ display: 'flex', gap: '10px', flexDirection: 'row', marginLeft: 'auto' }}>
                 <FaHeart
                     onClick={toggleLike}
-                    style={{ color: post.isLiked ? '#ff0000' : '#ffffff', width: '20px', height: '20px', marginTop: '12px' }} />
+                    style={{ color: post.isLiked ? '#ff0000' : '#ffffff', width: '20px', height: '20px', marginTop: '12px', cursor: 'pointer' }} />
                 <p style={{color: '#ffffff', fontSize: '14px', marginTop: '10px',}}>{post.postLikes}</p>
             </div>
           </div>

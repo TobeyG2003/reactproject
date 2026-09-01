@@ -75,6 +75,8 @@ export function Post() {
         content: newComment.content,
         imageurl: newComment.image,
       });
+      await fetchPostData();
+      await fetchCommentData();
     } catch (error) {
       console.error('Error adding comment:', error)
     }
@@ -91,36 +93,28 @@ export function Post() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  async function fetchPostData() {
+      try {
+        const response = await axios.post('http://localhost:3000/fetchpostdata', { postId: id });
+        setBackendData(response.data);
+      } catch (error) {
+        console.error('Error fetching Post Data:', error);
+      }
+  }
+
+  async function fetchCommentData() {
+      try {
+        const response = await axios.post('http://localhost:3000/fetchcomments', { postId: id });
+        setBackendComments(response.data);
+      } catch (error) {
+        console.error('Error fetching Comment Data:', error);
+      }
+  }
+
   useEffect(() => {
-    async function fetchPostData() {
-        // Fetch comments data from the backend
-        await axios.post('http://localhost:3000/fetchpostdata', {
-            postId: id,
-        })
-        .then((response) => {
-            setBackendData(response.data);
-        })
-        .catch((error) => {
-            console.error('Error fetching Post Data:', error);
-        });
-    }
-
-    async function fetchCommentData() {
-        // Fetch comments data from the backend
-        await axios.post('http://localhost:3000/fetchcomments', {
-            postId: id,
-        })
-        .then((response) => {
-            setBackendComments(response.data);
-        })
-        .catch((error) => {
-            console.error('Error fetching Comment Data:', error);
-        });
-    }
-
     fetchPostData();
     fetchCommentData();
-    }, [id]);
+  }, [id]);
 
   return (
     <>
@@ -238,7 +232,7 @@ export function Post() {
                 </div> 
 
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}> 
-                  <button onClick={() => { addComment();
+                  <button onClick={async () => { await addComment();
                       setNewComment((prev) => ({ ...prev, image: '' })); 
                       setNewComment((prev) => ({...prev, content: ''}));
                       setNewComment((prev) => ({...prev, isAdd: false}));
@@ -260,7 +254,7 @@ export function Post() {
               </div> 
             </div>
           }
-          <div className="comments-section" style={{ marginTop: '30px' }}>
+          <div className="comments-section" style={{ margin: '30px auto 0 auto', width: '70%', display: 'flex', flexDirection: 'column',}}>
         <h3 style={{ color: '#ffffff', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
           Comments ({backendComments.length})
         </h3>
@@ -270,6 +264,9 @@ export function Post() {
               key={comment.id}
               commentdata={comment} 
               isCard={false}
+              postId = {id}
+              isReply = {false}
+              onCommentAdded={async () => { await fetchPostData(); await fetchCommentData(); }}
             />
           ))
         ) : (

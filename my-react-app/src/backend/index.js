@@ -286,6 +286,28 @@ db.connect((err) => {
     console.log("comments table ready");
   });
 
+  db.query(
+    "ALTER TABLE comments ADD COLUMN IF NOT EXISTS reply_chain_count INT DEFAULT 0",
+    (err) => {
+      if (err) {
+        // Fallback for MySQL versions that don't support IF NOT EXISTS: check INFORMATION_SCHEMA
+        const schema = (db.config && db.config.database) || "mydatabase";
+        const checkColumnQ = `SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'comments' AND COLUMN_NAME = 'reply_chain_count'`;
+        db.query(checkColumnQ, [schema], (chkErr, rows) => {
+          if (chkErr) {
+            console.error("Failed to check for reply_chain_count column:", chkErr.message);
+            return;
+          }
+          if (rows && rows[0] && rows[0].cnt === 0) {
+            db.query("ALTER TABLE comments ADD COLUMN reply_chain_count INT DEFAULT 0", (addErr) => {
+              if (addErr) console.error("Failed to add reply_chain_count column to comments:", addErr.message);
+            });
+          }
+        });
+      }
+    }
+  );
+
   db.query(createLikesTable, (error) => {
     if (error) {
       console.error("Error creating likes table:", error);
@@ -563,17 +585,62 @@ app.post("/fetchreplies", (req, res) => {
 });
 
 app.post("/addcomment", (req, res) => {
-  const { postId, userId, content, imageurl, parentCommentId, } = req.body;
+  const { postId, userId, content, imageurl, parentCommentId, replychain } = req.body;
 
-  const q = "INSERT INTO comments (post_id, user_id, content, image_url, parent_comment_id) VALUES (?, ?, ?, ?, ?)";
+  if (parentCommentId) {
+    // If this is a reply, fetch parent comment to determine the user being replied to
+    const getParent = "SELECT user_id, reply_chain_count FROM comments WHERE id = ?";
+    db.query(getParent, [parentCommentId], (err, rows) => {
+      if (err) {
+        console.error("Failed to fetch parent comment:", err.message);
+        return res.status(500).json({ error: "Unable to add reply to the database." });
+      }
 
-  db.query(q, [postId, userId, content, imageurl, parentCommentId || null], (err, data) => {
-    if (err) {
-      console.error("Failed to add comment:", err.message);
-      return res.status(500).json({ error: "Unable to add comment to the database." });
-    }
-    return res.json({ message: "Comment added successfully!", commentId: data.insertId });
-  });
+      const parent = rows && rows[0] ? rows[0] : null;
+      const replyUserId = parent ? parent.user_id : null;
+      const parentChain = parent ? (parent.reply_chain_count || 0) : 0;
+      const newChain = (replychain !== undefined && replychain !== null) ? replychain : parentChain + 1;
+
+      const q = "INSERT INTO comments (post_id, user_id, content, image_url, parent_comment_id, reply_chain_count, reply_user_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+      db.query(
+        q,
+        [postId, userId, content, imageurl, parentCommentId, newChain, replyUserId],
+        (insErr, data) => {
+          if (insErr) {
+            console.error("Failed to add reply:", insErr.message);
+            return res.status(500).json({ error: "Unable to add reply to the database." });
+          }
+
+          const newCommentId = data.insertId;
+          const updateParent = "UPDATE comments SET reply_total = reply_total + 1 WHERE id = ?";
+          db.query(updateParent, [parentCommentId], (err2) => {
+            if (err2) console.error("Failed to update parent comment reply_total:", err2.message);
+            return res.json({ message: "Reply added successfully!", commentId: newCommentId });
+          });
+        }
+      );
+    });
+  } else {
+    // Top-level comment on a post
+    const q = "INSERT INTO comments (post_id, user_id, content, image_url, parent_comment_id, reply_chain_count) VALUES (?, ?, ?, ?, ?, ?)";
+    db.query(
+      q,
+      [postId, userId, content, imageurl, null, replychain || 0],
+      (err, data) => {
+        if (err) {
+          console.error("Failed to add comment:", err.message);
+          return res.status(500).json({ error: "Unable to add comment to the database." });
+        }
+
+        const newCommentId = data.insertId;
+        const updatePost = "UPDATE posts SET replies_num = replies_num + 1 WHERE id = ?";
+        db.query(updatePost, [postId], (err2) => {
+          if (err2) console.error("Failed to update post replies_num:", err2.message);
+          return res.json({ message: "Comment added successfully!", commentId: newCommentId });
+        });
+      }
+    );
+  }
 });
 
 app.post("/fetchUser", (req, res) => {

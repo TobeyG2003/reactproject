@@ -89,7 +89,7 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
       await fetchReplies();
 
       if (onCommentAdded && typeof onCommentAdded === 'function') {
-        try { await onCommentAdded(); } catch (e) { /* ignore */ }
+        try { await onCommentAdded(); } catch (e) {}
       }
 
       return resp.data;

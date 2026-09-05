@@ -98,10 +98,10 @@ export function Navbar() {
               src={'data:image/png;base64,'+userdata.profile_picture_url} 
               alt="Profile" 
               style={{ width: '35px', height: '35px', borderRadius: '50%' }}
-              onClick = {() => navigate('/profile')} 
+              onClick = {() => navigate(`/profile/${userdata.id}`)} 
             />
             ): (
-              <div className='pfp' onClick={() => navigate('/profile')}><CgProfile
+              <div className='pfp' onClick={() => navigate('/profile/${comments.userId}')}><CgProfile
               style={{color: '#ffffff', width: '35px', height: '35px', borderRadius: '50%' }}  />
               </div>
             )}

@@ -685,6 +685,62 @@ app.post("/checkfriend", (req, res) => {
   });
 });
 
+app.post("/fetchfriends", (req, res) => {
+  const { userId } = req.body
+
+  const q = "SELECT * FROM friends WHERE user_id = ?";
+
+  db.query(q, [userId], (err, data) => {
+    if (err) {
+      console.error("Failed to check friends:", err.message);
+      return res.status(500).json({ error: "Unable to search friends" });
+    }
+    return res.json(data);
+  });
+});
+
+app.post("/fetchlikes", (req, res) => {
+  const { userId } = req.body
+
+  const q = "SELECT * FROM likes WHERE user_id = ?";
+
+  db.query(q, [userId], (err, data) => {
+    if (err) {
+      console.error("Failed to check likes:", err.message);
+      return res.status(500).json({ error: "Unable to search likes" });
+    }
+    return res.json(data);
+  });
+});
+
+app.post("/fetchfollowed", (req, res) => {
+  const { userId } = req.body
+
+  const q = "SELECT * FROM followed_forums WHERE user_id = ?";
+
+  db.query(q, [userId], (err, data) => {
+    if (err) {
+      console.error("Failed to check follows:", err.message);
+      return res.status(500).json({ error: "Unable to search follows" });
+    }
+    return res.json(data);
+  });
+});
+
+app.post("/fetchactivity", (req, res) => {
+  const { userId } = req.body
+
+  const q = "SELECT * FROM likes WHERE user_id = ?";
+
+  db.query(q, [userId], (err, data) => {
+    if (err) {
+      console.error("Failed to check likes:", err.message);
+      return res.status(500).json({ error: "Unable to search likes" });
+    }
+    return res.json(data);
+  });
+});
+
 app.post("/fetchforumdata", (req, res) => {
   const { forumId } = req.body;
 

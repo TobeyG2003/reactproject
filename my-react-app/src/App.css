@@ -189,6 +189,7 @@
   transition: color 0.3s;
   position: relative;
   font-size: 14px;
+  cursor: pointer;
 }
 
 .navbarLinkSelected {
@@ -198,6 +199,7 @@
   text-underline-offset: 4px;
   color: #ffffff;
   font-size: 14px;
+  cursor: pointer;
 }
 
 .navbarLink::after {
@@ -377,4 +379,33 @@ button {
 
 .dropdownElement:hover::after {
   transform: scaleX(.9); 
+}
+
+.profilebanner {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: 25px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.tab-buttons {
+  display: flex;
+  flex-direction: row;
+  box-sizing: border-box;
+  width: 100%;
+  gap: 12px;
+  background-color: #1b357a;
+  background-image: linear-gradient(to bottom, #1b357a 20%, #242424 140%);
+  border-bottom: 1px solid #2a334b;
+  padding: 10px;
+  margin-bottom: 30px;
+  border-radius: 16px;
+}
+
+.itemList {
+  width: 100%;
+  display: flex;
+  flex-direction: column
 }

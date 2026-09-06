@@ -125,7 +125,9 @@ export function Post() {
             width: '100%'
           }}
         >
+          <div style = {{ width: '70%', margin: '0 auto'}}>
           <Forumpost postdata={backendData} isCard={false}   />
+          </div>
           <div
             style = {{
               display: 'flex',

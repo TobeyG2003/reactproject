@@ -13,15 +13,35 @@ import { ForumCard } from './forumcard';
 
 export function Following() {
 
+    const { userdata } = useContext(AuthContext);
+
+    const [ followedForums, setFollowedForums ] = useState([]);
+
+    async function fetchFollowedForums() {
+        try {
+            const response = await axios.post('http://localhost:3000/fetchfollowed', { userId: userdata?.id });
+            // response.data contains rows from followed_forums (user_id, forum_id)
+            const forums = (response.data || []).map((r) => ({ id: r.forum_id }));
+            setFollowedForums(forums);
+            console.log('Followed forums fetched:', forums);
+        } catch (error) {
+            console.error('Error fetching followed forums:',error);
+        }
+    }
+
+    useEffect(() => {
+        fetchFollowedForums();
+    }, [userdata?.id]);
+
     return (
         <div className='itemList'>
-            {backendFriends.length > 0 ? (
-                backendFriends.map((friend) => (
-                    hi
+            {followedForums.length > 0 ? (
+                followedForums.map((forum) => (
+                    <ForumCard key={forum.id} forumid={forum.id} />
                 ))
             ) : (
                 <p style={{ color: '#888888', fontSize: '14px', marginTop: '15px' }}>
-                No friends :/
+                No followed forums
                 </p>
             )}
         </div>

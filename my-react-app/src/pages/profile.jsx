@@ -75,7 +75,7 @@ export function Profile() {
             display: 'flex',
             flexDirection: 'column',
             width: '70%',
-            gap: '10px'
+            gap: '10px',
             //backgroundColor: 'lightblue',
           }}
         >
@@ -90,7 +90,7 @@ export function Profile() {
                 onClick = {() => navigate(`/profile/${user.id}`)} 
               />
             ) : (
-              <div className='pfp' onClick={() => navigate('/profile/${comments.userId}')}><CgProfile
+              <div className='pfp' onClick={() => navigate(`/profile/${user.id}`)}><CgProfile
                 style={{color: '#ffffff', width: '160px', height: '160px', borderRadius: '50%' }}  />
               </div>
             )}

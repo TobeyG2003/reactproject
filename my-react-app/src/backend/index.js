@@ -727,6 +727,20 @@ app.post("/fetchfollowed", (req, res) => {
   });
 });
 
+app.post("/fetchisfollowing", (req, res) => {
+  const { userId, forumId } = req.body
+
+  const q = "SELECT * FROM followed_forums WHERE user_id = ? AND forum_id = ?";
+
+  db.query(q, [userId, forumId], (err, data) => {
+    if (err) {
+      console.error("Failed to check following status:", err.message);
+      return res.status(500).json({ error: "Unable to check following status" });
+    }
+    return res.json({ isFollowing: data.length > 0 });
+  });
+});
+
 app.post("/fetchactivity", (req, res) => {
   const { userId } = req.body
 
@@ -766,6 +780,23 @@ app.post("/fetchpostdata", (req, res) => {
       return res.status(500).json({ error: "Unable to fetch post from the database." });
     }
     return res.json(data[0]);
+  });
+});
+
+app.post('/fetchforumtags', (req, res) => {
+  const { forumId } = req.body;
+  const query = `
+    SELECT t.name 
+    FROM tags t
+    INNER JOIN forum_tags ft ON t.id = ft.tag_id
+    WHERE ft.forum_id = ?
+  `;
+  db.query(query, [forumId], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    
+    const tagNames = results.map(row => row.name);
+    
+    res.json(tagNames);
   });
 });
 
@@ -876,6 +907,71 @@ app.post("/toggleLike", (req, res) => {
               return res.status(500).json({ error: "Unable to fetch likes count." });
             }
             return res.json({ isLiked: true, likes: rows[0]?.likes || 0 });
+          });
+        });
+      });
+    }
+  });
+});
+
+app.post("/toggleFollow", (req, res) => {
+  const { userId, forumId } = req.body;
+
+  if (!userId || !forumId) {
+    return res.status(400).json({ error: "userId and forumId are required." });
+  }
+
+  const checkQuery = "SELECT * FROM followed_forums WHERE user_id = ? AND forum_id = ?";
+  const insertQuery = "INSERT INTO followed_forums (user_id, forum_id) VALUES (?, ?)";
+  const deleteQuery = "DELETE FROM followed_forums WHERE user_id = ? AND forum_id = ?";
+
+  db.query(checkQuery, [userId, forumId], (err, data) => {
+    if (err) {
+      console.error("Failed to check follow status:", err.message);
+      return res.status(500).json({ error: "Unable to check follow status in the database." });
+    }
+
+    if (data.length > 0) {
+      // unfollow
+      db.query(deleteQuery, [userId, forumId], (delErr) => {
+        if (delErr) {
+          console.error("Failed to remove follow:", delErr.message);
+          return res.status(500).json({ error: "Unable to remove follow from the database." });
+        }
+
+        const decQuery = "UPDATE forums SET followers_count = GREATEST(followers_count - 1, 0) WHERE id = ?";
+        db.query(decQuery, [forumId], (updErr) => {
+          if (updErr) console.error("Failed to decrement followers_count:", updErr.message);
+
+          const getQuery = "SELECT followers_count AS followers FROM forums WHERE id = ?";
+          db.query(getQuery, [forumId], (gErr, rows) => {
+            if (gErr) {
+              console.error("Failed to fetch followers count:", gErr.message);
+              return res.status(500).json({ error: "Unable to fetch followers count." });
+            }
+            return res.json({ isFollowing: false, followers: rows[0]?.followers || 0 });
+          });
+        });
+      });
+    } else {
+      // follow
+      db.query(insertQuery, [userId, forumId], (insErr) => {
+        if (insErr) {
+          console.error("Failed to add follow:", insErr.message);
+          return res.status(500).json({ error: "Unable to add follow to the database." });
+        }
+
+        const incQuery = "UPDATE forums SET followers_count = followers_count + 1 WHERE id = ?";
+        db.query(incQuery, [forumId], (updErr) => {
+          if (updErr) console.error("Failed to increment followers_count:", updErr.message);
+
+          const getQuery = "SELECT followers_count AS followers FROM forums WHERE id = ?";
+          db.query(getQuery, [forumId], (gErr, rows) => {
+            if (gErr) {
+              console.error("Failed to fetch followers count:", gErr.message);
+              return res.status(500).json({ error: "Unable to fetch followers count." });
+            }
+            return res.json({ isFollowing: true, followers: rows[0]?.followers || 0 });
           });
         });
       });

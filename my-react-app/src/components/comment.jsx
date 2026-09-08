@@ -359,7 +359,7 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
               style={{color: '#ffffff', width: '30px', height: '30px', borderRadius: '50%' }}  />
               </div>
             )}
-                <p style={{ color: '#ffffff', fontSize: '14px' }} onClick={() => navigate(`/profile/${comments.userId}`)}>{comments.username || 'Unavailable'}</p>
+                <p className='navbarLink'style={{ color: '#ffffff', fontSize: '14px' }} onClick={() => navigate(`/profile/${comments.userId}`)}>{comments.username || 'Unavailable'}</p>
                 <p>
                     <TimeAgo datetime={comments.date ? comments.date.replace(' ', 'T') : ''} locale="en_US" />
                 </p>
@@ -400,7 +400,7 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
               style={{color: '#ffffff', width: '30px', height: '30px', borderRadius: '50%' }}  />
               </div>
             )}
-                <p style={{ color: '#ffffff', fontSize: '14px' }} onClick = {() => navigate(`/forum/${comments.forumId}`)}>{comments.forumName || 'Unavailable'}</p>
+                <p className='navbarLink'style={{ color: '#ffffff', fontSize: '14px' }} onClick = {() => navigate(`/forum/${comments.forumId}`)}>{comments.forumName || 'Unavailable'}</p>
                 </div>
                 }
             </div>

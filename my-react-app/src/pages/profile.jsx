@@ -32,7 +32,7 @@ export function Profile() {
     const [activeTab, setActiveTab] = useState(0);
 
     const tabData = [
-    { label: 'Activity', content: <Activity/> },
+    { label: 'Activity', content: <Activity userId={user.id}/> },
     { label: 'Likes', content: <Likes userId={user.id}/> },
     { label: 'Following', content: <Following userId={user.id}/> },
     { label: `Friends (${user.friendsnum})`, content: <Friends/> },
@@ -45,6 +45,7 @@ export function Profile() {
         const response = await axios.post('http://localhost:3000/fetchUser', { userId: id });
         setUser((prev) => ({
           ...prev,
+          id: id,
           username: response.data.username,
           displayname: response.data.display_name,
           bio: response.data.bio,
@@ -59,7 +60,7 @@ export function Profile() {
 
     fetchUserData();
 
-  }, [userdata?.id]);
+  }, [id]);
 
   return (
     <>

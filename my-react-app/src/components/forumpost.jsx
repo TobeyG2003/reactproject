@@ -148,7 +148,7 @@ export function Forumpost({postdata, isCard = true}) {
         <CgProfile style={{ color: "#ffffff", width: "30px", height: "30px", borderRadius: "50%" }} />
       </div>
     )}
-    <p style={{ color: "#ffffff", fontSize: "14px" }} onClick={() => navigate(`/profile/${post.userId}`)}>
+    <p className="navbarLink"style={{ color: "#ffffff", fontSize: "14px" }} onClick={() => navigate(`/profile/${post.userId}`)}>
       {post.username || "Unavailable"}
     </p>
     <p>

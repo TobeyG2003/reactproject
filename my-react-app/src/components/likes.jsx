@@ -71,13 +71,13 @@ export function Likes({ userId }) {
                         likes.map((item) =>
                             item.kind === 'post' ? (
                                 <Forumpost
-                                    key={item.likeRow.id}
+                                    key={`${item.kind}-${item.likeRow.id}`}
                                     postdata={item.data}
                                     isCard={true}
                                 />
                             ) : (
                                 <Comment
-                                    key={item.likeRow.id}
+                                    key={`${item.kind}-${item.likeRow.id}`}
                                     commentdata={item.data}
                                     isCard={true}
                                     isReply={false}

@@ -741,18 +741,49 @@ app.post("/fetchisfollowing", (req, res) => {
   });
 });
 
-app.post("/fetchactivity", (req, res) => {
-  const { userId } = req.body
+app.post("/fetchUserActivity", (req, res) => {
+    const { userId } = req.body;
 
-  const q = "SELECT * FROM likes WHERE user_id = ?";
+    const q = `
+        SELECT 
+            'post' AS item_type,
+            id AS item_id,
+            title,
+            content,
+            image_url,
+            created_at,
+            likes_count,
+            forum_id,
+            NULL AS post_id,
+            NULL AS parent_comment_id
+        FROM posts
+        WHERE user_id = ?
 
-  db.query(q, [userId], (err, data) => {
-    if (err) {
-      console.error("Failed to check likes:", err.message);
-      return res.status(500).json({ error: "Unable to search likes" });
-    }
-    return res.json(data);
-  });
+        UNION ALL
+
+        SELECT 
+            'comment' AS item_type,
+            id AS item_id,
+            NULL AS title,
+            content,
+            image_url,
+            created_at,
+            likes_count,
+            NULL AS forum_id,
+            post_id,
+            parent_comment_id
+        FROM comments
+        WHERE user_id = ?
+
+        ORDER BY created_at DESC;
+    `;
+    db.query(q, [userId, userId], (err, data) => {
+        if (err) {
+            console.error("Failed to fetch user activity:", err.message);
+            return res.status(500).json({ error: "Unable to fetch user activity from the database." });
+        }
+        return res.json(data); 
+    });
 });
 
 app.post("/fetchforumdata", (req, res) => {

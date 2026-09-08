@@ -11,7 +11,7 @@ import { MdArrowDropDown } from "react-icons/md";
 import { FaRegTrashCan } from "react-icons/fa6";
 import { ForumCard } from './forumcard';
 
-export function Following() {
+export function Following( { userId } ) {
 
     const { userdata } = useContext(AuthContext);
 
@@ -19,11 +19,10 @@ export function Following() {
 
     async function fetchFollowedForums() {
         try {
-            const response = await axios.post('http://localhost:3000/fetchfollowed', { userId: userdata?.id });
-            // response.data contains rows from followed_forums (user_id, forum_id)
+            const response = await axios.post('http://localhost:3000/fetchfollowed', { userId: userId });
             const forums = (response.data || []).map((r) => ({ id: r.forum_id }));
             setFollowedForums(forums);
-            console.log('Followed forums fetched:', forums);
+            // console.log('Followed forums fetched:', forums);
         } catch (error) {
             console.error('Error fetching followed forums:',error);
         }
@@ -31,7 +30,7 @@ export function Following() {
 
     useEffect(() => {
         fetchFollowedForums();
-    }, [userdata?.id]);
+    }, [userId]);
 
     return (
         <div className='itemList'>

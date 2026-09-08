@@ -274,8 +274,8 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
         <div className="comment"
             style={{
               ...(!isCard && { border: '0px', backgroundColor: 'transparent', borderBottom: '1px solid', borderRadius: '0'}),
-              ...(isReply && { borderColor: '#3a3a3a', borderLeft: '3px dotted #414141', borderBlockEnd: ''}),
-              ...(isReply && { transform: `translateX(${Math.min(comments.replySpacing || 0, 8) * 16}px)` }),
+              ...(isReply && !isCard && { borderColor: '#3a3a3a', borderLeft: '3px dotted #414141', borderBlockEnd: ''}),
+              ...(isReply && !isCard && { transform: `translateX(${Math.min(comments.replySpacing || 0, 8) * 16}px)` }),
             }}>
             {isEdit ? (
               <>
@@ -363,7 +363,7 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
                 <p>
                     <TimeAgo datetime={comments.date ? comments.date.replace(' ', 'T') : ''} locale="en_US" />
                 </p>
-                {comments.replyChain > 0 && (
+                {comments.replyUserId && (
                     <>
                     <div>
                         replying to 

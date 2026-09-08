@@ -783,6 +783,20 @@ app.post("/fetchpostdata", (req, res) => {
   });
 });
 
+app.post("/fetchcommentdata", (req, res) => {
+  const { commentId } = req.body;
+
+  const q = "SELECT * FROM comments WHERE id = ?";
+
+  db.query(q, [commentId], (err, data) => {
+    if (err) {
+      console.error("Failed to fetch comment:", err.message);
+      return res.status(500).json({ error: "Unable to fetch comment from the database." });
+    }
+    return res.json(data[0]);
+  });
+});
+
 app.post('/fetchforumtags', (req, res) => {
   const { forumId } = req.body;
   const query = `

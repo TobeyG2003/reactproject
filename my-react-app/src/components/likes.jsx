@@ -13,9 +13,82 @@ import { MdArrowDropDown } from "react-icons/md";
 import { FaRegTrashCan } from "react-icons/fa6";
 
 
+export function Likes({ userId }) {
 
-export function Likes() {
+    const [likes, setLikes] = useState([]);
+
+    async function fetchPostData(postId) {
+        try {
+            const response = await axios.post('http://localhost:3000/fetchpostdata', { postId });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching post data:', error);
+            return null;
+        }
+    }
+
+    async function fetchCommentData(commentId) {
+        try {
+            const response = await axios.post('http://localhost:3000/fetchcommentdata', { commentId });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching comment data:', error);
+            return null;
+        }
+    }
+
+    async function fetchLikes() {
+        try {
+            const response = await axios.post('http://localhost:3000/fetchlikes', { userId: userId })
+            const rows = response.data || [];
+
+            const detailed = await Promise.all(rows.map(async (row) => {
+                if (row.post_id) {
+                    const post = await fetchPostData(row.post_id);
+                    return { kind: 'post', data: post, likeRow: row };
+                } else if (row.comment_id) {
+                    const comment = await fetchCommentData(row.comment_id);
+                    return { kind: 'comment', data: comment, likeRow: row };
+                }
+                return null;
+            }));
+
+            const filtered = detailed.filter(item => item && item.data);
+            setLikes(filtered);
+            //console.log('Likes fetched and resolved:', filtered)
+        } catch (error) {
+            console.error('Error fetching likes:', error)
+        }
+    }
+
+    useEffect(() => {
+        if (userId) fetchLikes()
+    }, [userId])
+
     return (
-        <p>likes tab</p>
+        <div className='itemList'>
+                    {likes.length > 0 ? (
+                        likes.map((item) =>
+                            item.kind === 'post' ? (
+                                <Forumpost
+                                    key={item.likeRow.id}
+                                    postdata={item.data}
+                                    isCard={true}
+                                />
+                            ) : (
+                                <Comment
+                                    key={item.likeRow.id}
+                                    commentdata={item.data}
+                                    isCard={true}
+                                    isReply={false}
+                                />
+                            )
+                        )
+                    ) : (
+                        <p style={{ color: '#888888', fontSize: '14px', marginTop: '15px' }}>
+                        No liked content
+                        </p>
+                    )}
+                </div>
     );
 }

@@ -155,7 +155,6 @@ export function Forumpost({postdata, isCard = true}) {
       <TimeAgo datetime={post.postDate ? post.postDate.replace(" ", "T") : ""} locale="en_US" />
     </p>
   </div>
-    {!isCard && (
       <div
         style={{
         display: "flex",
@@ -175,9 +174,9 @@ export function Forumpost({postdata, isCard = true}) {
               style={{color: '#ffffff', width: '30px', height: '30px', borderRadius: '50%' }}  />
               </div>
             )}
-                <p style={{ color: '#ffffff', fontSize: '14px' }} onClick = {() => navigate(`/forum/${post.forumId}`)}>{post.forumName || 'Unavailable'}</p>
+                <p className='navbarLink' style={{ color: '#ffffff', fontSize: '14px' }} onClick = {() => navigate(`/forum/${post.forumId}`)}>{post.forumName || 'Unavailable'}</p>
                 </div>
-                )}
+
           </div>
           <h2
             style = {{

@@ -33,8 +33,8 @@ export function Profile() {
 
     const tabData = [
     { label: 'Activity', content: <Activity/> },
-    { label: 'Likes', content: <Likes/> },
-    { label: 'Following', content: <Following/> },
+    { label: 'Likes', content: <Likes userId={user.id}/> },
+    { label: 'Following', content: <Following userId={user.id}/> },
     { label: `Friends (${user.friendsnum})`, content: <Friends/> },
   ];
 

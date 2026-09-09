@@ -155,6 +155,7 @@ db.connect((err) => {
     CREATE TABLE IF NOT EXISTS friends (
       user_id INT NOT NULL,
       friend_id INT NOT NULL,
+      status ENUM('pending', 'accepted') NOT NULL DEFAULT 'pending',
       PRIMARY KEY (user_id, friend_id),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -688,7 +689,7 @@ app.post("/checkfriend", (req, res) => {
 app.post("/fetchfriends", (req, res) => {
   const { userId } = req.body
 
-  const q = "SELECT * FROM friends WHERE user_id = ?";
+  const q = "SELECT * FROM friends WHERE user_id = ? AND status = 'accepted'";
 
   db.query(q, [userId], (err, data) => {
     if (err) {
@@ -696,6 +697,120 @@ app.post("/fetchfriends", (req, res) => {
       return res.status(500).json({ error: "Unable to search friends" });
     }
     return res.json(data);
+  });
+});
+
+app.post("/fetchfriendrequests", (req, res) => {
+  const { userId } = req.body
+
+  const q = "SELECT * FROM friends WHERE friend_id = ? AND status = 'pending'";
+
+  db.query(q, [userId], (err, data) => {
+    if (err) {
+      console.error("Failed to check friend requests:", err.message);
+      return res.status(500).json({ error: "Unable to search friend requests" });
+    }
+    return res.json(data);
+  });
+});
+
+app.post("/fetchfriendstatus", (req, res) => {
+  const { userId, friendId } = req.body;
+
+  if (!userId || !friendId) {
+    return res.json({ status: "none" });
+  }
+
+  const q = "SELECT * FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)";
+  
+  db.query(q, [userId, friendId, friendId, userId], (err, data) => {
+    if (err) {
+      console.error("Failed to check friendship status:", err.message);
+      return res.status(500).json({ error: "Unable to check friendship status" });
+    }
+
+    if (data.length === 0) {
+      return res.json({ status: "none" });
+    }
+
+    const row = data[0];
+
+    if (row.status === 'pending') {
+      const isSender = Number(row.user_id) === Number(userId);
+      return res.json({ 
+        status: "pending", 
+        isSender: isSender 
+      });
+    }
+
+    return res.json({ status: "accepted" });
+  });
+});
+
+app.post("/sendfriendrequest", (req, res) => {
+  const { userId, friendId } = req.body
+
+  const q = "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, 'pending')";
+
+  db.query(q, [userId, friendId], (err, data) => {
+    if (err) {
+      console.error("Failed to send friend request:", err.message);
+      return res.status(500).json({ error: "Unable to send friend request" });
+    }
+    return res.json({ message: "Friend request sent successfully!" });
+  });
+});
+
+app.post("/acceptfriendrequest", (req, res) => {
+  const { userId, friendId } = req.body; 
+  const updateOriginal = "UPDATE friends SET status = 'accepted' WHERE user_id = ? AND friend_id = ?";
+  const insertMirror = "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, 'accepted')";
+
+  db.query(updateOriginal, [friendId, userId], (err, result) => {
+    if (err) return res.status(500).json({ error: "Failed to accept request" });
+
+    db.query(insertMirror, [userId, friendId], (err2, result2) => {
+      if (err2) return res.status(500).json({ error: "Failed to create mirror friendship" });
+      
+      return res.json({ message: "Friend request accepted!" });
+    });
+  });
+});
+
+app.post("/declinefriendrequest", (req, res) => {
+  const { userId, friendId } = req.body; 
+  const deleteRequest = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
+
+  db.query(deleteRequest, [friendId, userId], (err, result) => {
+    if (err) return res.status(500).json({ error: "Failed to decline request" });
+    
+    return res.json({ message: "Friend request declined!" });
+  });
+});
+
+app.post('/cancelfriendrequest', (req, res) => {
+  const { userId, friendId } = req.body;
+  const deleteRequest = 'DELETE FROM friends WHERE user_id = ? AND friend_id = ?';
+
+  db.query(deleteRequest, [userId, friendId], (err, result) => {
+    if (err) return res.status(500).json({ error: 'Failed to cancel request' });
+    return res.json({ message: 'Friend request canceled!' });
+  });
+});
+
+app.post("/unfriend", (req, res) => {
+  const { userId, friendId } = req.body; 
+  const deleteOriginal = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
+  const deleteMirror = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
+
+  db.query(deleteOriginal, [userId, friendId], (err, result) => {
+    if (err) return res.status(500).json({ error: "Failed to unfriend" });
+
+    db.query(deleteMirror, [friendId, userId], (err2, result2) => {
+      if (err2) return res.status(500).json({ error: "Failed to remove mirror friendship" });
+      
+      return res.json({ message: "Unfriended successfully!" });
+    });
   });
 });
 

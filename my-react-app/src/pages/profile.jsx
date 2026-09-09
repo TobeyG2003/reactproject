@@ -35,7 +35,7 @@ export function Profile() {
     { label: 'Activity', content: <Activity userId={user.id}/> },
     { label: 'Likes', content: <Likes userId={user.id}/> },
     { label: 'Following', content: <Following userId={user.id}/> },
-    { label: `Friends (${user.friendsnum})`, content: <Friends/> },
+    { label: `Friends (${user.friendsnum})`, content: <Friends userId={user.id}/> },
   ];
 
   useEffect(() => {

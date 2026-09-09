@@ -12,7 +12,7 @@ import { FaRegTrashCan } from "react-icons/fa6";
 import { FriendCard } from './friendcard';
 
 
-export function Friends(userId) {
+export function Friends({ userId }) {
 
     const [ backendFriends, setBackendFriends ] = useState([]);
 
@@ -27,10 +27,11 @@ export function Friends(userId) {
 
     useEffect(() => {
 
-    })
+    }, []);
 
     return (
         <div className='itemList'>
+        <FriendCard friendId={1} />
             {backendFriends.length > 0 ? (
                 backendFriends.map((friend) => (
                     hi

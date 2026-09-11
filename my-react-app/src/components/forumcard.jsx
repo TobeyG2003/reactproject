@@ -42,9 +42,9 @@ export function ForumCard({ forumid }) {
     }
 
     async function fetchIsFollowing() {
-        if (!userdata || !forumid) return;
+        if (!userdata?.id || !forumid) return;
         try {
-            const response = await axios.post('http://localhost:3000/fetchisfollowing', { userId: userdata.id, forumId: forumid });
+            const response = await axios.post('http://localhost:3000/fetchisfollowing', { userId: userdata?.id, forumId: forumid });
             setNewCard((prevCard) => ({
                 ...prevCard,
                 isFollowed: response.data.isFollowing
@@ -83,7 +83,7 @@ export function ForumCard({ forumid }) {
         fetchForumData();
         fetchTags();
         fetchIsFollowing();
-    }, [forumid]);
+    }, [forumid, userdata?.id]);
 
     return (
         <div className="forumpost" style = {{padding: '8px'}}>

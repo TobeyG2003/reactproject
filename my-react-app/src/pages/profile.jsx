@@ -27,6 +27,8 @@ export function Profile() {
       bio: '',
       private: 'public',
       friendsnum: 0,
+      status: '',
+      isSender: false
   });
 
     const [activeTab, setActiveTab] = useState(0);
@@ -38,7 +40,85 @@ export function Profile() {
     { label: `Friends (${user.friendsnum})`, content: <Friends userId={user.id}/> },
   ];
 
-  useEffect(() => {
+  async function checkFriendStatus() {
+  try {
+    const response = await axios.post('http://localhost:3000/fetchfriendstatus', { 
+      userId: userdata.id, 
+      friendId: id 
+    });
+    
+    setUser((prev) => ({ 
+      ...prev, 
+      status: response.data.status,
+      isSender: response.data.isSender 
+    }));
+    
+    console.log('Friend status:', response.data.status);
+  } catch (error) {
+    console.error('Error checking friend status:', error);
+  }
+}
+
+    async function handleFriendButton() {
+        if (user.status === 'pending') {
+            try {
+            await axios.post('http://localhost:3000/cancelfriendrequest', { userId: userdata?.id, friendId: id });
+                setUser((prev) => ({
+                    ...prev,
+                    status: ''
+                }));
+            } catch (error) {
+                console.error('Error canceling friend request:', error);
+            }
+        } else if (user.status === 'accepted') {
+            try {
+            await axios.post('http://localhost:3000/unfriend', { userId: userdata?.id, friendId: id });
+                setUser((prev) => ({
+                    ...prev,
+                    status: ''
+                }));
+            } catch (error) {
+                console.error('Error removing friend:', error);
+            }
+        } else {
+            try {
+            await axios.post('http://localhost:3000/sendfriendrequest', { userId: userdata?.id, friendId: id });
+                setUser((prev) => ({
+                    ...prev,
+                    status: 'pending',
+                    isSender: true
+                }));
+            } catch (error) {
+                console.error('Error sending friend request:', error);
+            }
+        }
+    }
+
+  async function handleAcceptRequest() {
+    try {
+      await axios.post('http://localhost:3000/acceptfriendrequest', { userId: userdata?.id, friendId: id });
+      setUser((prev) => ({
+        ...prev,
+          status: 'accepted'
+      }));
+    } catch (error) {
+      console.error('Error accepting friend request:', error);
+    }
+  }
+
+  async function handleDeclineRequest() {
+    try {
+      await axios.post('http://localhost:3000/declinefriendrequest', { userId: userdata?.id, friendId: id });
+      setUser((prev) => ({
+        ...prev,
+          status: ''
+      }));
+    } catch (error) {
+      console.error('Error declining friend request:', error);
+    }
+  }
+
+    useEffect(() => {
     async function fetchUserData() {
       if (!id) return;
       try {
@@ -51,7 +131,8 @@ export function Profile() {
           bio: response.data.bio,
           joindate: response.data.created_at,
           profilePicture: response.data.profile_picture_url,
-          private: response.data.private
+          private: response.data.private,
+          friendsnum: response.data.friends_count
         }));
       } catch (error) {
         console.error('Error fetching Post User Data:', error);
@@ -59,8 +140,8 @@ export function Profile() {
     }
 
     fetchUserData();
-
-  }, [id]);
+    if (userdata?.id) checkFriendStatus();
+  }, [id, userdata?.id]);
 
   return (
     <>
@@ -108,7 +189,22 @@ export function Profile() {
                 >{user.displayname}</h1>
               <p>@{user.username}</p>
               <p>Joined {user.joindate}</p>
-              <button style = {{ marginTop: '10px'}}>Add Friend</button>
+              {userdata && id && String(userdata.id) !== String(id) && (
+                user.status === 'pending' ? (
+                  user.isSender ? (
+                    <button onClick={handleFriendButton} style={{ marginTop: '5px', marginRight: 'auto' }}>Pending</button>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', marginTop: '5px', marginRight: 'auto' }}>
+                      <button onClick={handleAcceptRequest} >Accept Request</button>
+                      <button onClick={handleDeclineRequest} >Decline Request</button>
+                    </div>
+                  )
+                ) : user.status === 'accepted' ? (
+                  <button onClick={handleFriendButton} style={{ marginTop: '5px', marginRight: 'auto' }}>Friends</button>
+                ) : (
+                  <button onClick={handleFriendButton} style={{ marginTop: '5px', marginRight: 'auto' }}>Add Friend</button>
+                )
+              )}
             </div>
           </div>
           <p style = {{ marginTop: '10px'}}>{user.bio}</p>

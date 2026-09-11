@@ -101,7 +101,7 @@ export function Navbar() {
               onClick = {() => navigate(`/profile/${userdata.id}`)} 
             />
             ): (
-              <div className='pfp' onClick={() => navigate('/profile/${comments.userId}')}><CgProfile
+              <div className='pfp' onClick={() => navigate(`/profile/${userdata.id}`)}><CgProfile
               style={{color: '#ffffff', width: '35px', height: '35px', borderRadius: '50%' }}  />
               </div>
             )}

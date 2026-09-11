@@ -55,7 +55,7 @@ export function Forumpost({postdata, isCard = true}) {
     if (!userdata?.id) return console.warn('User must be logged in to like');
     try {
       const response = await axios.post('http://localhost:3000/toggleLike', {
-        userId: userdata.id,
+        userId: userdata?.id,
         postId: post.postId,
       });
       setPost((prevPost) => ({
@@ -88,7 +88,7 @@ export function Forumpost({postdata, isCard = true}) {
       if (!userdata?.id || !post.postId) return;
       try {
         const response = await axios.post('http://localhost:3000/checkLiked', { 
-          userId: userdata.id, 
+          userId: userdata?.id, 
           postId: post.postId, 
         });
         setPost((prevPost) => ({ ...prevPost, isLiked: response.data.isLiked }));

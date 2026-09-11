@@ -71,7 +71,7 @@ export function Post() {
     try {
       await axios.post('http://localhost:3000/addcomment', {
         postId: id,
-        userId: userdata.id,
+        userId: userdata?.id,
         content: newComment.content,
         imageurl: newComment.image,
       });

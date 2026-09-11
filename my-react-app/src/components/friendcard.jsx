@@ -81,13 +81,38 @@ export function FriendCard({ friendId }) {
                 await axios.post('http://localhost:3000/sendfriendrequest', { userId: userdata?.id, friendId: friendId });
                 setUser((prev) => ({
                     ...prev,
-                    status: 'pending'
+                    status: 'pending',
+                    isSender: true
                 }));
             } catch (error) {
                 console.error('Error sending friend request:', error);
             }
         }
     }
+
+  async function handleAcceptRequest() {
+    try {
+      await axios.post('http://localhost:3000/acceptfriendrequest', { userId: userdata?.id, friendId: friendId });
+      setUser((prev) => ({
+        ...prev,
+          status: 'accepted'
+      }));
+    } catch (error) {
+      console.error('Error accepting friend request:', error);
+    }
+  }
+
+  async function handleDeclineRequest() {
+    try {
+      await axios.post('http://localhost:3000/declinefriendrequest', { userId: userdata?.id, friendId: friendId });
+      setUser((prev) => ({
+        ...prev,
+          status: ''
+      }));
+    } catch (error) {
+      console.error('Error declining friend request:', error);
+    }
+  }
 
     useEffect(() => {
   if (userdata?.id && friendId) {
@@ -116,21 +141,33 @@ export function FriendCard({ friendId }) {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'flex-start',
+                marginTop: '5px'
               }}>
-              <h2
+              <h2 className = 'navbarLink'
                 style={{
-                  marginBottom: '0px',
+                  marginBottom: '0px', fontSize: '18px', fontWeight: 'bold', color: '#ffffff'
                 }}
+                onClick = {() => navigate(`/profile/${user.id}`)}
+                
                 >{user.displayname}</h2>
               <p>@{user.username}</p>
             </div>
-                {user.status === 'pending' ? (
-                  <button onClick={handleFriendButton} style = {{ marginTop: '5px', marginLeft: 'auto'}}>Pending</button>
+              {userdata?.id !== user.id && userdata && (
+                user.status === 'pending' ? (
+                  user.isSender ? (
+                    <button onClick={handleFriendButton} style={{ marginTop: '5px', marginLeft: 'auto' }}>Pending</button>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', marginTop: '5px', marginLeft: 'auto' }}>
+                      <button onClick={handleAcceptRequest} >Accept Request</button>
+                      <button onClick={handleDeclineRequest} >Decline Request</button>
+                    </div>
+                  )
                 ) : user.status === 'accepted' ? (
-                  <button onClick={handleFriendButton} style = {{ marginTop: '5px', marginLeft: 'auto'}}>Friends</button>
+                  <button onClick={handleFriendButton} style={{ marginTop: '5px', marginLeft: 'auto' }}>Friends</button>
                 ) : (
-                  <button onClick={handleFriendButton} style = {{ marginTop: '5px', marginLeft: 'auto'}}>Add Friend</button>
-                )}
+                  <button onClick={handleFriendButton} style={{ marginTop: '5px', marginLeft: 'auto' }}>Add Friend</button>
+                )
+              )}
           </div>
           </div>
     );

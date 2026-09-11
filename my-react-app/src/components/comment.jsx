@@ -75,9 +75,14 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
 
   async function addNewReply() {
     try {
+      if (!userdata?.id) {
+        navigate('/login');
+        return;
+      }
+
       const resp = await axios.post('http://localhost:3000/addcomment', {
         postId: postId,
-        userId: userdata.id,
+        userId: userdata?.id,
         content: newComment.content,
         imageurl: newComment.image,
         parentCommentId: comments.commentId,
@@ -230,7 +235,7 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
       if (!userdata?.id || !comments.commentId) return;
       try {
         const response = await axios.post('http://localhost:3000/checkLiked', {
-          userId: userdata.id,
+          userId: userdata?.id,
           commentId: comments.commentId,
         });
         setComments((prevComments) => ({ ...prevComments, isLiked: response.data.isLiked }));
@@ -453,7 +458,7 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
             </button>
             }</>)}
             <div style={{ display: 'flex', gap: '10px', flexDirection: 'row', marginLeft: 'auto' }}>
-              {userdata.id == comments.userId && (
+              {userdata?.id == comments.userId && (
                 <button
                   style = {{ height: '25px', marginTop: '10px', marginLeft: '10px', alignSelf: 'center'}}
                   onClick = {() => {setViewReplies(true), setAddReply(false), setIsEdit(true),

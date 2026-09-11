@@ -34,7 +34,8 @@ db.connect((err) => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       bio TEXT,
       profile_picture_url MEDIUMTEXT,
-      private BOOLEAN DEFAULT FALSE
+      private BOOLEAN DEFAULT FALSE,
+      friends_count INT DEFAULT 0
     )
   `;
 
@@ -332,6 +333,27 @@ db.connect((err) => {
     }
     console.log("friends table ready");
   });
+
+  db.query(
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS friends_count INT DEFAULT 0",
+    (err) => {
+      if (err) {
+        const schema = (db.config && db.config.database) || "mydatabase";
+        const checkColumnQ = `SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users' AND COLUMN_NAME = 'friends_count'`;
+        db.query(checkColumnQ, [schema], (chkErr, rows) => {
+          if (chkErr) {
+            console.error("Failed to check for friends_count column:", chkErr.message);
+            return;
+          }
+          if (rows && rows[0] && rows[0].cnt === 0) {
+            db.query("ALTER TABLE users ADD COLUMN friends_count INT DEFAULT 0", (addErr) => {
+              if (addErr) console.error("Failed to add friends_count column to users:", addErr.message);
+            });
+          }
+        });
+      }
+    }
+  );
 
   db.query(createSampleUsers, (error) => {
     if (error) {
@@ -647,7 +669,7 @@ app.post("/addcomment", (req, res) => {
 app.post("/fetchUser", (req, res) => {
   const { userId } = req.body;
 
-  const q = "SELECT username, display_name, bio, profile_picture_url, created_at, private FROM users WHERE id = ?";
+  const q = "SELECT username, display_name, bio, profile_picture_url, created_at, private, friends_count FROM users WHERE id = ?";
 
   db.query(q, [userId], (err, data) => {
     if (err) {
@@ -704,6 +726,20 @@ app.post("/fetchfriendrequests", (req, res) => {
   const { userId } = req.body
 
   const q = "SELECT * FROM friends WHERE friend_id = ? AND status = 'pending'";
+
+  db.query(q, [userId], (err, data) => {
+    if (err) {
+      console.error("Failed to check friend requests:", err.message);
+      return res.status(500).json({ error: "Unable to search friend requests" });
+    }
+    return res.json(data);
+  });
+});
+
+app.post("/fetchsentrequests", (req, res) => {
+  const { userId } = req.body
+
+  const q = "SELECT * FROM friends WHERE user_id = ? AND status = 'pending'";
 
   db.query(q, [userId], (err, data) => {
     if (err) {
@@ -772,7 +808,12 @@ app.post("/acceptfriendrequest", (req, res) => {
     db.query(insertMirror, [userId, friendId], (err2, result2) => {
       if (err2) return res.status(500).json({ error: "Failed to create mirror friendship" });
       
-      return res.json({ message: "Friend request accepted!" });
+      // increment friends_count for both users
+      const incQuery = "UPDATE users SET friends_count = friends_count + 1 WHERE id IN (?, ?)";
+      db.query(incQuery, [userId, friendId], (incErr) => {
+        if (incErr) console.error("Failed to increment friends_count:", incErr.message);
+        return res.json({ message: "Friend request accepted!" });
+      });
     });
   });
 });
@@ -808,8 +849,12 @@ app.post("/unfriend", (req, res) => {
 
     db.query(deleteMirror, [friendId, userId], (err2, result2) => {
       if (err2) return res.status(500).json({ error: "Failed to remove mirror friendship" });
-      
-      return res.json({ message: "Unfriended successfully!" });
+      // decrement friends_count for both users (never go below 0)
+      const decQuery = "UPDATE users SET friends_count = GREATEST(friends_count - 1, 0) WHERE id IN (?, ?)";
+      db.query(decQuery, [userId, friendId], (decErr) => {
+        if (decErr) console.error("Failed to decrement friends_count:", decErr.message);
+        return res.json({ message: "Unfriended successfully!" });
+      });
     });
   });
 });

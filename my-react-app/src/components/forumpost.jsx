@@ -31,6 +31,18 @@ export function Forumpost({postdata, isCard = true}) {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const openPost = () => {
+    if (isCard && post.postId) navigate(`/post/${post.postId}`);
+  };
+
+  const handleCardKeyDown = (event) => {
+    if (!isCard || event.target !== event.currentTarget) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      openPost();
+    }
+  };
+
   useEffect(() => {
     if (postdata) {
       setPost((prev) => ({
@@ -117,7 +129,18 @@ export function Forumpost({postdata, isCard = true}) {
   }, [post.userId, post.postId, post.forumId, userdata?.id]);
 
   return (
-    <div className="forumpost">
+    <div
+      className="forumpost"
+      onClick={(event) => {
+        if (event.target.closest('a, button, input, textarea, select, [data-stop-card-navigation]')) return;
+        openPost();
+      }}
+      onKeyDown={handleCardKeyDown}
+      role={isCard ? 'link' : undefined}
+      tabIndex={isCard ? 0 : undefined}
+      aria-label={isCard ? `Open post: ${post.postTitle}` : undefined}
+      style={isCard ? { cursor: 'pointer' } : undefined}
+    >
         <div
         style = {{
           display: 'flex',
@@ -141,14 +164,15 @@ export function Forumpost({postdata, isCard = true}) {
         src={"data:image/png;base64," + post.profilePicture}
         alt="Profile"
         style={{ width: "30px", height: "30px", borderRadius: "50%" }} 
+        data-stop-card-navigation
         onClick={() => navigate(`/profile/${post.userId}`)}
       />
     ) : (
-      <div className="pfp" onClick={() => navigate(`/profile/${post.userId}`)}>
+      <div className="pfp" data-stop-card-navigation onClick={() => navigate(`/profile/${post.userId}`)}>
         <CgProfile style={{ color: "#ffffff", width: "30px", height: "30px", borderRadius: "50%" }} />
       </div>
     )}
-    <p className="navbarLink"style={{ color: "#ffffff", fontSize: "14px" }} onClick={() => navigate(`/profile/${post.userId}`)}>
+    <p className="navbarLink"style={{ color: "#ffffff", fontSize: "14px" }} data-stop-card-navigation onClick={() => navigate(`/profile/${post.userId}`)}>
       {post.username || "Unavailable"}
     </p>
     <p>
@@ -167,14 +191,15 @@ export function Forumpost({postdata, isCard = true}) {
               src={'data:image/png;base64,'+post.forumPicture} 
               alt="Profile" 
               style={{ width: '30px', height: '30px', borderRadius: '50%' }}
+              data-stop-card-navigation
               onClick = {() => navigate(`/forum/${post.forumId}`)} 
             />
             ): (
-              <div className='pfp' onClick={() => navigate(`/forum/${post.forumId}`)}><CgProfile
+              <div className='pfp' data-stop-card-navigation onClick={() => navigate(`/forum/${post.forumId}`)}><CgProfile
               style={{color: '#ffffff', width: '30px', height: '30px', borderRadius: '50%' }}  />
               </div>
             )}
-                <p className='navbarLink' style={{ color: '#ffffff', fontSize: '14px' }} onClick = {() => navigate(`/forum/${post.forumId}`)}>{post.forumName || 'Unavailable'}</p>
+                <p className='navbarLink' style={{ color: '#ffffff', fontSize: '14px' }} data-stop-card-navigation onClick = {() => navigate(`/forum/${post.forumId}`)}>{post.forumName || 'Unavailable'}</p>
                 </div>
 
           </div>
@@ -218,6 +243,7 @@ export function Forumpost({postdata, isCard = true}) {
             <div 
             style={{ display: 'flex', gap: '10px', flexDirection: 'row', marginLeft: 'auto' }}>
                 <FaHeart
+                  data-stop-card-navigation
                     onClick={toggleLike}
                     style={{ color: post.isLiked ? '#ff0000' : '#ffffff', width: '20px', height: '20px', marginTop: '12px', cursor: 'pointer' }} />
                 <p style={{color: '#ffffff', fontSize: '14px', marginTop: '10px',}}>{post.postLikes}</p>

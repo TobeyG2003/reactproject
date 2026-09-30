@@ -335,6 +335,17 @@ button {
   gap: 10px;
 }
 
+.forumpost[role="link"],
+.comment[role="link"] {
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.forumpost[role="link"]:hover:not(:has(button:hover, a:hover, input:hover, [data-stop-card-navigation]:hover)),
+.comment[role="link"]:hover:not(:has(button:hover, a:hover, input:hover, [data-stop-card-navigation]:hover)) {
+  background-color: #292929;
+  border-color: #ffffff;
+}
+
 .forum {
   display: flex;
   flex-direction: column;

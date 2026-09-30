@@ -124,6 +124,16 @@ export function Forum() {
         fetchIsFollowing();
     }, [id]);
 
+    const sortedPosts = [...posts].sort((postA, postB) => {
+        if (sortBy === 'Most Likes') {
+            return Number(postB.likes_count || 0) - Number(postA.likes_count || 0);
+        }
+
+        const dateA = new Date((postA.created_at || '').replace(' ', 'T')).getTime();
+        const dateB = new Date((postB.created_at || '').replace(' ', 'T')).getTime();
+        return sortBy === 'Oldest' ? dateA - dateB : dateB - dateA;
+    });
+
     return (
     <>
         <section id="page2"
@@ -273,11 +283,11 @@ export function Forum() {
                             Oldest
                             </li>
                             <li 
-                              className = {sortBy === 'Popular' ? 'dropdownElementSelected' : 'dropdownElement'}
-                              onClick={() => {setIsOpen(false); setSortBy('Popular')}}
+                                                            className = {sortBy === 'Most Likes' ? 'dropdownElementSelected' : 'dropdownElement'}
+                                                            onClick={() => {setIsOpen(false); setSortBy('Most Likes')}}
                               style={{ padding: "8px 16px", }}
                             >
-                            Popular
+                                                        Most Likes
                             </li>
                         </ul>
                       )}
@@ -285,7 +295,7 @@ export function Forum() {
             </div>
             </div>
             {posts.length > 0 ? (
-                      posts.map((post) => (
+                      sortedPosts.map((post) => (
                         <Forumpost 
                           key={post.id}
                           postdata={post} 

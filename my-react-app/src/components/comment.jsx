@@ -277,7 +277,24 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
     return (
       <>
         <div className="comment"
+            onClick={(event) => {
+              if (!isCard || event.target.closest('a, button, input, textarea, select, [data-stop-card-navigation]')) return;
+              const associatedPostId = postId || commentdata?.post_id;
+              if (associatedPostId) navigate(`/post/${associatedPostId}`);
+            }}
+            onKeyDown={(event) => {
+              if (!isCard || event.target !== event.currentTarget) return;
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                const associatedPostId = postId || commentdata?.post_id;
+                if (associatedPostId) navigate(`/post/${associatedPostId}`);
+              }
+            }}
+            role={isCard ? 'link' : undefined}
+            tabIndex={isCard ? 0 : undefined}
+            aria-label={isCard ? 'Open the post this comment belongs to' : undefined}
             style={{
+              ...(isCard && { cursor: 'pointer' }),
               ...(!isCard && { border: '0px', backgroundColor: 'transparent', borderBottom: '1px solid', borderRadius: '0'}),
               ...(isReply && !isCard && { borderColor: '#3a3a3a', borderLeft: '3px dotted #414141', borderBlockEnd: ''}),
               ...(isReply && !isCard && { transform: `translateX(${Math.min(comments.replySpacing || 0, 8) * 16}px)` }),
@@ -357,14 +374,15 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
               src={'data:image/png;base64,'+comments.profilePicture} 
               alt="Profile" 
               style={{ width: '30px', height: '30px', borderRadius: '50%' }}
+              data-stop-card-navigation
               onClick = {() => navigate(`/profile/${comments.userId}`)} 
             />
             ): (
-              <div className='pfp' onClick={() => navigate(`/profile/${comments.userId}`)}><CgProfile
+              <div className='pfp' data-stop-card-navigation onClick={() => navigate(`/profile/${comments.userId}`)}><CgProfile
               style={{color: '#ffffff', width: '30px', height: '30px', borderRadius: '50%' }}  />
               </div>
             )}
-                <p className='navbarLink'style={{ color: '#ffffff', fontSize: '14px' }} onClick={() => navigate(`/profile/${comments.userId}`)}>{comments.username || 'Unavailable'}</p>
+                <p className='navbarLink'style={{ color: '#ffffff', fontSize: '14px' }} data-stop-card-navigation onClick={() => navigate(`/profile/${comments.userId}`)}>{comments.username || 'Unavailable'}</p>
                 <p>
                     <TimeAgo datetime={comments.date ? comments.date.replace(' ', 'T') : ''} locale="en_US" />
                 </p>
@@ -379,6 +397,7 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
                         fontSize: '13pt',
                         cursor: 'pointer',
                       }}
+                      data-stop-card-navigation
                       onClick = {() => navigate(`/profile/${comments.replyUserId}`)} 
 >
                       {comments.replyUsername}</div>
@@ -398,14 +417,15 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
               src={'data:image/png;base64,'+comments.forumPicture} 
               alt="Profile" 
               style={{ width: '30px', height: '30px', borderRadius: '50%' }}
+              data-stop-card-navigation
               onClick = {() => navigate(`/forum/${comments.forumId}`)} 
             />
             ): (
-              <div className='pfp' onClick={() => navigate(`/forum/${comments.forumId}`)}><CgProfile
+              <div className='pfp' data-stop-card-navigation onClick={() => navigate(`/forum/${comments.forumId}`)}><CgProfile
               style={{color: '#ffffff', width: '30px', height: '30px', borderRadius: '50%' }}  />
               </div>
             )}
-                <p className='navbarLink'style={{ color: '#ffffff', fontSize: '14px' }} onClick = {() => navigate(`/forum/${comments.forumId}`)}>{comments.forumName || 'Unavailable'}</p>
+                <p className='navbarLink'style={{ color: '#ffffff', fontSize: '14px' }} data-stop-card-navigation onClick = {() => navigate(`/forum/${comments.forumId}`)}>{comments.forumName || 'Unavailable'}</p>
                 </div>
                 }
             </div>
@@ -469,6 +489,7 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
                 >Edit</button>
               )}
                 <FaHeart
+                  data-stop-card-navigation
                     onClick={toggleLike}
                     style={{ color: comments.isLiked ? '#ff0000' : '#ffffff', width: '20px', height: '20px', marginTop: '12px', cursor: 'pointer' }} />
                 <p style={{ color: '#ffffff', fontSize: '14px', marginTop: '10px', marginLeft: 'auto' }}>{comments.likes || 0}</p>

@@ -8,6 +8,9 @@ import { Signup } from './pages/signup'
 import { ProfileSettings } from './pages/profileSettings'
 import { Layout } from './layout'
 import { Profile } from './pages/profile'
+import { Forum } from './pages/forum'
+import { NewPost } from './pages/newpost'
+import { NewForum } from './pages/newforum'
 import { AuthProvider } from './AuthContext'
 
 function App() {
@@ -18,6 +21,9 @@ function App() {
         <Route element={<Layout/>}>
           <Route path="/" element={<Page1/>} />
           <Route path="/post/:id" element={<Post/>} />
+          <Route path="/newpost/:id" element={<NewPost/>} />
+          <Route path="/forum/:id" element={<Forum/>} />
+          <Route path="/newforum" element={<NewForum/>} />
           <Route path="/search" element={<Search/>} />
           <Route path="/login" element={<Login/>} />
           <Route path="/signup" element={<Signup/>} />

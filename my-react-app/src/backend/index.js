@@ -960,6 +960,20 @@ app.post("/fetchforumdata", (req, res) => {
   });
 });
 
+app.post("/fetchforumposts", (req, res) => {
+  const { forumId } = req.body;
+
+  const q = "SELECT * FROM posts WHERE forum_id = ?";
+
+  db.query(q, [forumId], (err, data) => {
+    if (err) {
+      console.error("Failed to fetch posts:", err.message);
+      return res.status(500).json({ error: "Unable to fetch posts from the database." });
+    }
+    return res.json(data);
+  });
+});
+
 app.post("/fetchpostdata", (req, res) => {
   const { postId } = req.body;
 

@@ -40,6 +40,15 @@ export function Profile() {
     { label: `Friends (${user.friendsnum})`, content: <Friends userId={user.id}/> },
   ];
 
+  function DateDisplay({ sqlTimestamp }) {
+        const formattedDate = new Date(sqlTimestamp).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        });
+        return formattedDate;
+    }
+  
   async function checkFriendStatus() {
   try {
     const response = await axios.post('http://localhost:3000/fetchfriendstatus', { 
@@ -188,7 +197,7 @@ export function Profile() {
                 }}
                 >{user.displayname}</h1>
               <p>@{user.username}</p>
-              <p>Joined {user.joindate}</p>
+              <p>Joined {DateDisplay({ sqlTimestamp: user.joindate })}</p>
               {userdata && id && String(userdata.id) !== String(id) && (
                 user.status === 'pending' ? (
                   user.isSender ? (

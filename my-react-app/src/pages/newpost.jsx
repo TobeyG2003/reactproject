@@ -8,7 +8,7 @@ import { BiCommentDetail } from "react-icons/bi";
 import { MdArrowDropDown } from "react-icons/md";
 import { FaRegTrashCan } from "react-icons/fa6";
 
-export function FriendCard( friendId ) {
+export function NewPost() {
     return (
         <p>likes tab</p>
     );

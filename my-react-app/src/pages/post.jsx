@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect, useRef, useContext } from 'react'
 import axios from 'axios'
@@ -17,7 +17,7 @@ export function Post() {
 
   const fileInputRef = useRef(null);
 
-  const { userdata, logoutUser } = useContext(AuthContext);
+  const { userdata } = useContext(AuthContext);
 
   const { id } = useParams();
 
@@ -197,14 +197,17 @@ export function Post() {
                 <img 
                   src={'data:image/png;base64,' + newComment.image}
                 style={{
-                marginTop :'10px',
-                width: '100%',
-                height: '100%',
-                maxWidth: '200px', 
-                maxHeight: '160px', 
-                objectFit: 'contain',
-                borderRadius: '5%',
-                border: '1px solid #ffffff',}}
+                    display: 'block',
+                    alignSelf: 'center',
+                    marginTop: '10px',
+                    width: 'auto',
+                    height: 'auto',
+                    maxWidth: '100%',
+                    maxHeight: '400px',
+                    boxSizing: 'border-box',
+                    borderRadius: '5%',
+                    border: '1px solid #ffffff',
+                  }}
             /> )}
               <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: '10px', alignSelf: 'stretch' }}> 
                 <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}> 

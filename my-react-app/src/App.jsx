@@ -11,6 +11,7 @@ import { Profile } from './pages/profile'
 import { Forum } from './pages/forum'
 import { NewPost } from './pages/newpost'
 import { NewForum } from './pages/newforum'
+import { EditForum } from './pages/editforum'
 import { AuthProvider } from './AuthContext'
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
           <Route path="/newpost/:id" element={<NewPost/>} />
           <Route path="/forum/:id" element={<Forum/>} />
           <Route path="/newforum" element={<NewForum/>} />
+          <Route path="/editforum/:id" element={<EditForum/>} />
           <Route path="/search" element={<Search/>} />
           <Route path="/login" element={<Login/>} />
           <Route path="/signup" element={<Signup/>} />

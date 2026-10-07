@@ -205,22 +205,38 @@ export function Forumpost({postdata, isCard = true}) {
           </div>
           <h2
             style = {{
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            //marginRight: 'auto'
-
+            width: '100%',
+            minWidth: 0,
+            maxWidth: '100%',
+            boxSizing: 'border-box',
+            textAlign: 'left',
+            lineHeight: 1.4,
+            overflowWrap: 'anywhere',
+            ...(isCard && {
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }),
            }}
           >{post.postTitle}</h2>
           <p
           style = {{
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            width: '100%',
+            minWidth: 0,
+            maxWidth: '100%',
+            boxSizing: 'border-box',
+            textAlign: 'left',
+            lineHeight: 1.4,
+            overflowWrap: 'anywhere',
+            ...(isCard && {
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }),
             marginRight: 'auto'
            }}
           >{post.postContent}</p>
@@ -228,10 +244,13 @@ export function Forumpost({postdata, isCard = true}) {
                 <img 
                     src={'data:image/png;base64,'+post.postImage}
                 style={{
-                width: '100%',
-                height: '100%',
-                maxWidth: '500px', 
-                maxHeight: '400px', 
+                display: 'block',
+                alignSelf: 'center',
+                width: 'auto',
+                height: 'auto',
+                maxWidth: 'min(100%, 500px)',
+                maxHeight: '400px',
+                boxSizing: 'border-box',
                 objectFit: 'contain',
                 borderRadius: '5%',
                 border: '1px solid #ffffff',}}

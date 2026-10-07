@@ -311,9 +311,14 @@ button {
   cursor: pointer;
 }
 
+textarea {
+  resize: vertical;
+}
+
 .forumpost {
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 16px;

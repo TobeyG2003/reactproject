@@ -4,12 +4,12 @@ import { useEffect, useState, useContext, useRef } from 'react'
 import { CgProfile } from "react-icons/cg";
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AuthContext } from '../AuthContext'
-import { BiCommentDetail } from "react-icons/bi";
 import { MdArrowDropDown } from "react-icons/md";
-import { FaRegTrashCan } from "react-icons/fa6";
 import { Forumpost } from '../components/forumpost';
 
 export function Forum() {
+
+    const navigate = useNavigate();
 
     const { userdata } = useContext(AuthContext);
     const { id } = useParams();
@@ -255,6 +255,7 @@ export function Forum() {
                         fontSize: '14px',
                         border: '1px solid white',
                     }}
+                    onClick={() => navigate(`/newpost/${id}`)}
                 >+ Add a Post</button>
                 <div
               style = {{

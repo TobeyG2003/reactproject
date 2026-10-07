@@ -666,6 +666,20 @@ app.post("/addcomment", (req, res) => {
   }
 });
 
+app.post("/addpost", (req, res) => {
+  const { forumId, userId, title, content, imageurl } = req.body;
+
+  const q = "INSERT INTO posts (forum_id, user_id, title, content, image_url) VALUES (?, ?, ?, ?, ?)";
+
+  db.query(q, [forumId, userId, title, content, imageurl], (err, data) => {
+    if (err) {
+      console.error("Failed to add post:", err.message);
+      return res.status(500).json({ error: "Unable to add post to the database." });
+    }
+    return res.json({ message: "Post added successfully!", postId: data.insertId });
+  });
+});
+
 app.post("/fetchUser", (req, res) => {
   const { userId } = req.body;
 

@@ -1018,18 +1018,31 @@ app.post("/fetchcommentdata", (req, res) => {
 
 app.post('/fetchforumtags', (req, res) => {
   const { forumId } = req.body;
+
   const query = `
-    SELECT t.name 
-    FROM tags t
-    INNER JOIN forum_tags ft ON t.id = ft.tag_id
+    SELECT
+      ft.forum_id,
+      ft.tag_id,
+      t.name
+    FROM forum_tags ft
+    INNER JOIN tags t ON t.id = ft.tag_id
     WHERE ft.forum_id = ?
+    ORDER BY t.name
   `;
+
   db.query(query, [forumId], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    
-    const tagNames = results.map(row => row.name);
-    
-    res.json(tagNames);
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    const tags = results.map((row) => ({
+      forum_tag_id: row.tag_id,
+      forum_id: row.forum_id,
+      tag_id: row.tag_id,
+      name: row.name
+    }));
+
+    return res.json(tags);
   });
 });
 
@@ -1099,7 +1112,6 @@ app.post("/toggleLike", (req, res) => {
     const targetId = commentId || postId;
 
     if (data.length > 0) {
-      // remove like: delete the exact like row
       const deleteQuery = isComment ? "DELETE FROM likes WHERE user_id = ? AND comment_id = ?" : "DELETE FROM likes WHERE user_id = ? AND post_id = ?";
       db.query(deleteQuery, [userId, targetId], (err) => {
         if (err) {
@@ -1122,7 +1134,6 @@ app.post("/toggleLike", (req, res) => {
         });
       });
     } else {
-      // add like
       db.query(insertLikeQuery, [userId, commentId || null, postId || null], (err) => {
         if (err) {
           console.error("Failed to add like:", err.message);
@@ -1206,6 +1217,161 @@ app.post("/toggleFollow", (req, res) => {
             }
             return res.json({ isFollowing: true, followers: rows[0]?.followers || 0 });
           });
+        });
+      });
+    }
+  });
+});
+
+app.post("/createforum", (req, res) => {
+  const { name, description, owned_by, image } = req.body;
+
+  if (!name || !owned_by) {
+    return res.status(400).json({ error: "Forum name and owner are required." });
+  }
+
+  const trimmedName = String(name).trim();
+  const trimmedDescription = description ? String(description).trim() : "";
+
+  const q = "INSERT INTO forums (name, description, owned_by, forum_picture_url) VALUES (?, ?, ?, ?)";
+
+  db.query(q, [trimmedName, trimmedDescription, owned_by, image || ""], (err, result) => {
+    if (err) {
+      if (err.code === "ER_DUP_ENTRY") {
+        return res.status(409).json({ error: "Forum name is already taken." });
+      }
+
+      console.error("Failed to create forum:", err.message);
+      return res.status(500).json({ error: "Unable to create the forum." });
+    }
+
+    return res.status(201).json({ forumId: result.insertId, message: "Forum created successfully." });
+  });
+});
+
+app.post("/checkforumname", (req, res) => {
+  const { forumName } = req.body;
+
+  const q = "SELECT COUNT(*) AS count FROM forums WHERE name = ?";
+
+  db.query(q, [forumName], (err, data) => {
+    if (err) {
+      console.error("Failed to check forum name:", err.message);
+      return res.status(500).json({ error: "Unable to check forum name in the database." });
+    }
+    return res.json({ exists: data[0].count > 0 });
+  });
+});
+
+app.post("/getmoderators", (req, res) => {
+  const { forumId } = req.body;
+
+  const q = "SELECT u.id, u.username, u.display_name, u.profile_picture_url, m.status FROM moderators m JOIN users u ON m.user_id = u.id WHERE m.forum_id = ?";
+
+  db.query(q, [forumId], (err, data) => {
+    if (err) {
+      console.error("Failed to fetch moderators:", err.message);
+      return res.status(500).json({ error: "Unable to fetch moderators from the database." });
+    }
+    return res.json(data);
+  });
+});
+
+app.post("/addmoderator", (req, res) => {
+  const { forumId, userId, status } = req.body;
+
+  if (!forumId || !userId || !status) {
+    return res.status(400).json({ error: "forumId, userId, and status are required." });
+  }
+  
+  const q = "INSERT INTO moderators (forum_id, user_id, status) VALUES (?, ?, ?)";
+
+  db.query(q, [forumId, userId, status], (err, result) => {
+    if (err) {
+      console.error("Failed to add moderator:", err.message);
+      return res.status(500).json({ error: "Unable to add moderator." });
+    }
+    return res.status(201).json({ message: "Moderator added successfully." });
+  });
+});
+
+app.post("/removemoderator", (req, res) => {
+  const { forumId, userId } = req.body;
+
+  if (!forumId || !userId) {
+    return res.status(400).json({ error: "forumId and userId are required." });
+  }
+
+  const q = "DELETE FROM moderators WHERE forum_id = ? AND user_id = ?";
+
+  db.query(q, [forumId, userId], (err, result) => {
+    if (err) {
+      console.error("Failed to remove moderator:", err.message);
+      return res.status(500).json({ error: "Unable to remove moderator." });
+    }
+    return res.status(200).json({ message: "Moderator removed successfully." });
+  });
+});
+
+app.post("/searchusers", (req, res) => {
+  const { searchTerm } = req.body;
+
+  if (!searchTerm) {
+    return res.status(400).json({ error: "searchTerm is required." });
+  }
+
+  const q = "SELECT id, username, display_name, profile_picture_url FROM users WHERE username LIKE ? OR display_name LIKE ? LIMIT 10";
+  const searchPattern = `%${searchTerm}%`;
+
+  db.query(q, [searchPattern, searchPattern], (err, data) => {
+    if (err) {
+      console.error("Failed to search users:", err.message);
+      return res.status(500).json({ error: "Unable to search users in the database." });
+    }
+    return res.json(data);
+  });
+});
+
+app.post("/addtagtoforum", (req, res) => {
+  const { forumId, tagName } = req.body;
+
+  if (!forumId || !tagName) {
+    return res.status(400).json({ error: "forumId and tagName are required." });
+  }
+
+  const checkTagQuery = "SELECT id FROM tags WHERE name = ?";
+  const insertTagQuery = "INSERT INTO tags (name) VALUES (?)";
+  const insertForumTagQuery = "INSERT INTO forum_tags (forum_id, tag_id) VALUES (?, ?)";
+
+  db.query(checkTagQuery, [tagName], (err, data) => {
+    if (err) {
+      console.error("Failed to check tag:", err.message);
+      return res.status(500).json({ error: "Unable to check tag in the database." });
+    }
+
+    let tagId;
+    if (data.length > 0) {
+      tagId = data[0].id;
+      db.query(insertForumTagQuery, [forumId, tagId], (err2) => {
+        if (err2) {
+          console.error("Failed to add tag to forum:", err2.message);
+          return res.status(500).json({ error: "Unable to add tag to forum in the database." });
+        }
+        return res.json({ message: "Tag added to forum successfully." });
+      });
+    } else {
+      db.query(insertTagQuery, [tagName], (err3, result) => {
+        if (err3) {
+          console.error("Failed to create tag:", err3.message);
+          return res.status(500).json({ error: "Unable to create tag in the database." });
+        }
+        tagId = result.insertId;
+        db.query(insertForumTagQuery, [forumId, tagId], (err4) => {
+          if (err4) {
+            console.error("Failed to add new tag to forum:", err4.message);
+            return res.status(500).json({ error: "Unable to add new tag to forum in the database." });
+          }
+          return res.json({ message: "New tag created and added to forum successfully." });
         });
       });
     }

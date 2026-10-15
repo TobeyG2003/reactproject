@@ -95,10 +95,10 @@ export function ForumCard({ forumid }) {
             }}>
                 {newCard.forumPicture ? (
                     <img className='pfp' src={'data:image/png;base64,'+newCard.forumPicture} alt="Forum" style={{ width: '60px', height: '60px', borderRadius: '50%', }}
-                    onClick={() => navigate(`/forums/${forumid}`)}/>
+                    onClick={() => navigate(`/forum/${forumid}`)}/>
                 ) : (
                     <CgProfile className='pfp' style={{color: '#ffffff', width: '60px', height: '60px', borderRadius: '50%' }} 
-                    onClick={() => navigate(`/forums/${forumid}`)}/>
+                    onClick={() => navigate(`/forum/${forumid}`)}/>
                 )}
                 <div style = {{
                     display: 'flex',
@@ -135,7 +135,7 @@ export function ForumCard({ forumid }) {
             >
                 {tags.map((tag, index) => (
                     <div key={index} className='tag' style={{ marginRight: '5px' }}>
-                        {tag}
+                        {tag.name}
                     </div>
                 ))}
             </div>

@@ -206,7 +206,7 @@ export function Forum() {
                     >
                         {forum.followed ? 'Following' : 'Follow'}
                     </button>
-                    {/*forum.ownedby === userdata?.id*/ true && (
+                    {forum.ownedby === userdata?.id && (
                 <Link to={`/forum/${id}/edit`} style={{ marginLeft: 'auto', marginTop: '20px' }}>
                     <button
                         style = {{
@@ -233,7 +233,7 @@ export function Forum() {
                     }}>
                         {tags.map((tag, index) => (
                     <div key={index} className='tag' style={{ marginRight: '5px' }}>
-                        {tag}
+                        {tag.name}
                     </div>
                 ))}
                     </div>
@@ -264,7 +264,7 @@ export function Forum() {
                 flexDirection: 'row',
                 gap: '10px',
               }}>
-                <p>Sort By: </p>
+                <p>Sort By: {sortBy} </p>
                 <div className="dropdown-container" ref={dropdownRef} style={{ position: "relative", display: "inline-block", height: '30px' }}>
                       <MdArrowDropDown size = {30} style = {{color: isOpen? '#ffffff':''}} className="dropdown-button" onClick={toggleDropdown} />
                       {isOpen && (
@@ -305,7 +305,7 @@ export function Forum() {
                       ))
                     ) : (
                       <p style={{ color: '#888888', fontSize: '14px', marginTop: '15px' }}>
-                        No comments yet. Be the first to reply!
+                        No posts yet. Be the first!
                       </p>
                     )}
             </div>

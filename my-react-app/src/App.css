@@ -224,7 +224,7 @@
 }
 
 button {
-  background-color: #1b357a;
+  background-color: var(--bg-color, #1b357a); 
   color: #ffffff;
   border: none;
   padding: 8px 16px;
@@ -233,7 +233,7 @@ button {
   transition: background-color 0.3s, box-shadow 0.3s;
 
   &:hover {
-    background-color: #006bb3;
+    background-color: var(--hover-color,#006bb3);
     box-shadow: 8px 7px 6px rgba(0, 0, 0, 0.2);
   }
 
@@ -241,6 +241,10 @@ button {
     outline: 2px solid #ffffff;
     outline-offset: 2px;
   }
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.75);
 }
 
 .input-container {
@@ -312,7 +316,32 @@ button {
 }
 
 textarea {
+  --resize-color: rgba(204, 204, 204, 0.9);
   resize: vertical;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 25px;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #202020;
+  color: #ffffff;
+  font: inherit;
+  font-size: 12pt;
+}
+
+textarea::-webkit-resizer {
+  background: linear-gradient(135deg, transparent 0 60%, var(--resize-color) 60% 100%);
+}
+
+textarea:hover::-webkit-resizer,
+textarea:focus::-webkit-resizer {
+  opacity: 1;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: #ffffff;
+  --resize-color: rgba(255, 255, 255, 0.95);
 }
 
 .forumpost {

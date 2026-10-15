@@ -237,9 +237,10 @@ export function NewPost() {
             </div>
                     <h2>Post Content</h2>
                     <textarea 
-                    value={post.postContent} 
+                    value={post.postContent}
+                    placeholder="Share Your Thoughts"
                     onChange={(e) => setPost({ ...post, postContent: e.target.value })} 
-                    style={{ width: '100%', height: '150px' }} 
+                    style={{ minHeight: '140px',  width: '100%', height: '150px' }} 
                     />
                     {error.contentError && <p role="alert" style={{ color: '#ff9999' }}>{error.contentError}</p>}
                     {error.submitError && <p role="alert" style={{ color: '#ff9999' }}>{error.submitError}</p>}

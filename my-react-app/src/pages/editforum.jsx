@@ -53,7 +53,6 @@ export function EditForum() {
     moderator: false,
   })
 
-  const [ tags, setTags ] = useState([])
   const [ currentTags, setCurrentTags ] = useState([])
   const [ newTags, setNewTags ] = useState([])
   const [ removedTags, setRemovedTags ] = useState([])
@@ -74,6 +73,7 @@ export function EditForum() {
   const [error, setError] = useState({
     nameError: '',
     descriptionError: '',
+    tagError: '',
     moderatorError: '',
   })
 
@@ -179,10 +179,9 @@ export function EditForum() {
   const fetchForumData = async () => {
     try {
       const response = await axios.post('http://localhost:3000/fetchforumdata', { forumId: id })
-      setForum((prev) => ({ ...prev, name: response.data.name, description: response.data.description, image: response.data.image }))
-      setNewForum((prev) => ({ ...prev, name: response.data.name, description: response.data.description, image: response.data.image }))
+      setForum((prev) => ({ ...prev, name: response.data.name, description: response.data.description, image: response.data.forum_picture_url }))
+      setNewForum((prev) => ({ ...prev, name: response.data.name, description: response.data.description, image: response.data.forum_picture_url }))
       const tagList = await getTagList(id)
-      setTags(tagList)
       const modList = await getModList(id)
       setModerators(modList)
       setCurrentTags(tagList)
@@ -202,7 +201,7 @@ export function EditForum() {
     }
   }
 
-  const createForum = async () => {
+  /*const createForum = async () => {
     try {
       const response = await axios.post('http://localhost:3000/createforum', {
         name: forum.name.trim(),
@@ -216,7 +215,7 @@ export function EditForum() {
       console.error('Error creating forum: ', error)
       throw error
     }
-  }
+  }*/
 
   const addTags = async (forumId, tag) => {
     try {
@@ -234,8 +233,8 @@ export function EditForum() {
     }
 
     let isValid = true
-    const trimmedName = forum.name.trim()
-    const trimmedDescription = forum.description.trim()
+    const trimmedName = newforum.name.trim()
+    const trimmedDescription = newforum.description.trim()
 
     if (trimmedName === '') {
       nextErrors.nameError = 'Please enter a forum name'
@@ -271,22 +270,59 @@ export function EditForum() {
     }
     const lowerCaseValue = e.target.value.toLowerCase()
     setForum((prev) => ({ ...prev, tag: lowerCaseValue }))
+    setError((prev) => ({ ...prev, tagError: '' }))
+  }
+
+  const handleAddTag = () => {
+    const tagName = forum.tag.trim()
+    if (!tagName) {
+      setError((prev) => ({ ...prev, tagError: 'Please enter a tag' }))
+      return
+    }
+
+    if (currentTags.includes(tagName)) {
+      if (!removedTags.includes(tagName)) {
+        setError((prev) => ({ ...prev, tagError: 'Tag already exists' }))
+        return
+      } else {
+        setRemovedTags((prev) => prev.filter((tag) => tag !== tagName))
+      }
+    } else if (newTags.includes(tagName)) {
+      setError((prev) => ({ ...prev, tagError: 'Tag already exists' }))
+      return
+    } else {
+      setNewTags((prev) => [...prev, tagName])
+    }
+    setError((prev) => ({ ...prev, tagError: '' }))
+    setIsFocused((prev) => ({ ...prev, tag: false }))
+    setForum((prev) => ({ ...prev, tag: '' }))
   }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
 
     if (await validateForm()) {
-      console.log('Forum ready to submit:', forum)
-      const forumData = await createForum()
-      for (const tag of tags) {
-        await addTags(forumData.forumId, [tag])
+      console.log('Forum ready to submit:', newforum)
+      //const forumData = await createForum()
+      for (const tag of newTags) {
+        await addTags(id, tag)
       }
-      for (const mod of moderators) {
-        await axios.post('http://localhost:3000/addmoderator', { forumId: forumData.forumId, userId: mod.id, status: 'mod' })
+      for (const mod of newModerators) {
+        await axios.post('http://localhost:3000/addmoderator', { forumId: id, userId: mod.id, status: 'mod' })
       }
-      await axios.post('http://localhost:3000/addmoderator', { forumId: forumData.forumId, userId: userdata.id, status: 'owner' })
-      navigate(`/forum/${forumData.forumId}`)
+      for (const mod of removedModerators) {
+        await axios.post('http://localhost:3000/removemoderator', { forumId: id, userId: mod.id })
+      }
+      for (const tag of removedTags) {
+        await axios.post('http://localhost:3000/removetagfromforum', { forumId: id, tagName: tag })
+      }
+      await axios.post('http://localhost:3000/editforum', {
+        forumId: id,
+        name: newforum.name,
+        description: newforum.description,
+        image: newforum.image,
+      })
+      navigate(`/forum/${id}`)
     }
   }
 
@@ -325,8 +361,8 @@ export function EditForum() {
             boxShadow: '0 0 5px #005bd3, 0 0 15px #005bd3, 0 0 30px #005bd3',
           }}
         >
-          <h1>Create a New Forum</h1>
-          <p>Start a space for your community.</p>
+          <h1>Edit Forum</h1>
+          <p>Edit your forum details</p>
 
           <form
             noValidate
@@ -348,10 +384,10 @@ export function EditForum() {
                 gap: '12px',
               }}
             >
-            {forum.image ? (
+            {newforum.image ? (
                 <img
                     className="pfp"
-                    src={'data:image/png;base64,' + forum.image}
+                    src={'data:image/png;base64,' + newforum.image}
                     alt="Profile"
                     style={{ width: '200px', height: '200px', borderRadius: '50%', cursor: 'pointer' }}
                     onClick = {handleButtonClick}
@@ -376,12 +412,21 @@ export function EditForum() {
                 <button type="button" onClick={handleButtonClick}>
                   Upload Image
                 </button>
-                {forum.image && (
+                {newforum.image && (
                   <button
                     type="button"
-                    onClick={() => setForum((prev) => ({ ...prev, image: '' }))}
+                    onClick={() => setNewForum((prev) => ({ ...prev, image: '' }))}
                   >
                     Remove Image
+                  </button>
+                )}
+                {newforum.image != forum.image && (
+                  <button
+                    type="button"
+                    style = {{'--bg-color': '#b30000', '--hover-color': '#d60000'}}
+                    onClick={() => setNewForum((prev) => ({ ...prev, image: forum.image }))}
+                  >
+                    Revert Image
                   </button>
                 )}
               </div>
@@ -420,6 +465,8 @@ export function EditForum() {
               <div style={{ alignSelf: 'flex-start', marginBottom: '8px' }}>
                 <h2 style={{ margin: 0 }}>{edit.description ? 'New' : 'Current'} Description</h2>
               </div>
+              { edit.description ? (
+              <>
               <textarea
                 value={newforum.description}
                 onFocus={() => handleFocus('description')}
@@ -446,13 +493,26 @@ export function EditForum() {
                   boxShadow: isFocused.description ? '0 0 0 2px rgba(255,255,255,0.12)' : 'none',
                 }}
               />
+              <button type="button" style={{ marginLeft: '10px', '--bg-color': '#b30000', '--hover-color': '#d60000', height: '40px' }} onClick={() => {
+              setNewForum((prev) => ({ ...prev, description: forum.description }));
+              setEdit((prev) => ({ ...prev, description: false }));
+            }}>
+              <FaRegTrashCan size={18} />
+            </button>
               {error.descriptionError && (
                 <div style={{ color: '#ff8a8a', marginTop: '8px' }}>{error.descriptionError}</div>
+              )}</>) : (
+                <div style={{ display: 'flex', flexDirection: 'row', width: '98%', marginInline: 'auto', alignItems: 'center', gap: '10px' }}>
+                  <p style={{ margin: 0, flex: 1, minWidth: 0, textAlign: 'left', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{forum.description}</p>
+                  <button style = {{marginTop: '-10px', flexShrink: 0}} type = 'button' onClick = {() => setEdit((prev) => ({ ...prev, description: true }))}>
+                    Edit
+                  </button>
+                </div>
               )}
             </div>
             <h2>Current Tags</h2>
             <div style={{ display: 'flex', flexDirection: 'row', gap: '14px', flexWrap: 'wrap' }}>
-                {currentTags.map((tag, index) => (
+                {currentTags.filter((tag) => !removedTags.includes(tag)).map((tag) => (
                 <div
                   key={tag}
                     style={{display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center',}}>
@@ -460,7 +520,7 @@ export function EditForum() {
                     type='button'
                     onClick = {(e) => {
                       e.preventDefault()
-                      setTags((prev) => prev.filter((_, i) => i !== index))
+                      setRemovedTags((prev) => prev.includes(tag) ? prev : [...prev, tag])
                     }}
                     >
                         X
@@ -471,7 +531,45 @@ export function EditForum() {
                 </div>
               ))}
             </div>
-              {tags.length < 10 && (
+            {removedTags.length > 0 && (
+              <>
+                <h2>Removed Tags</h2>
+                <div style={{ display: 'flex', flexDirection: 'row', gap: '14px', flexWrap: 'wrap' }}>
+                  {removedTags.map((tag) => (
+                    <div key={tag} style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center' }}>
+                      <button
+                        style={{ color: '#ff9999', fontSize: '16px', padding: '0px', margin: '0px', border: 'none', backgroundColor: 'transparent' }}
+                        type='button'
+                        onClick={() => setRemovedTags((prev) => prev.filter((removedTag) => removedTag !== tag))}
+                      >
+                        X
+                      </button>
+                      <div className='tag' style={{ marginRight: '5px' }}>{tag}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+            {newTags.length > 0 && (
+              <>
+                <h2>New Tags</h2>
+                <div style={{ display: 'flex', flexDirection: 'row', gap: '14px', flexWrap: 'wrap' }}>
+                  {newTags.map((tag) => (
+                    <div key={tag} style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center' }}>
+                      <button
+                        style={{ color: '#ff9999', fontSize: '16px', padding: '0px', margin: '0px', border: 'none', backgroundColor: 'transparent' }}
+                        type='button'
+                        onClick={() => setNewTags((prev) => prev.filter((newTag) => newTag !== tag))}
+                      >
+                        X
+                      </button>
+                      <div className='tag' style={{ marginRight: '5px' }}>{tag}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+              {currentTags.filter((tag) => !removedTags.includes(tag)).length + newTags.length < 10 && (
             <div
                 style={{
                 display: 'flex',
@@ -489,8 +587,8 @@ export function EditForum() {
                 onChange={handleLowerCaseTagChange}
                 required
               />
-              <label>
-                Enter a new tag
+              <label style={{ color: error.tagError ? '#b30000' : '' }}>
+                {error.tagError ? error.tagError : 'Enter a new tag'}
               </label>
             </div>
                 <button
@@ -498,10 +596,7 @@ export function EditForum() {
                 type='button'
                 onClick = {(e) => {
                   e.preventDefault()
-                    if (forum.tag.trim() !== '' && !tags.includes(forum.tag.trim())) {
-                      setTags((prev) => [...prev, forum.tag.trim()])
-                      setForum((prev) => ({ ...prev, tag: '' }))
-                    }
+                  handleAddTag()
                 }}
                 >
                 +
@@ -605,7 +700,7 @@ export function EditForum() {
               </div></>
             )}
             <button type="submit" style={{ marginTop: '10px', width: '220px' }}>
-              Create Forum
+              Submit Changes
             </button>
             <dialog 
                 ref={dialogRef} 
@@ -680,13 +775,15 @@ export function EditForum() {
                         type='button'
                         onClick={() => {
                           if (currentModerators.some((mod) => mod.id === user.id)) {
-                            setRemovedModerators((prev) => prev.some((mod) => mod.id === user.id) ? prev : [...prev, user])
+                            setRemovedModerators((prev) => prev.some((mod) => mod.id === user.id)
+                              ? prev.filter((mod) => mod.id !== user.id)
+                              : [...prev, user])
                           } else {
                             setNewModerators((prev) => prev.filter((mod) => mod.id !== user.id))
                           }
                         }}
                       >
-                        Remove
+                        { !removedModerators.some((mod) => mod.id === user.id) ? 'Remove' : 'Undo Removal'}
                       </button>
                     ) : (
                       <button

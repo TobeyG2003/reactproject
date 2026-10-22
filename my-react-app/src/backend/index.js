@@ -1282,7 +1282,7 @@ app.post("/fetchforumtaglist", (req, res) => {
 
   const q = "SELECT t.* FROM tags t JOIN forum_tags ft ON t.id = ft.tag_id WHERE ft.forum_id = ? ORDER BY t.name";
 
-  db.query(q, (err, data) => {
+  db.query(q, [forumId], (err, data) => {
     if (err) {
       console.error("Failed to fetch tags:", err.message);
       return res.status(500).json({ error: "Unable to fetch tags from the database." });
@@ -1389,6 +1389,100 @@ app.post("/addtagtoforum", (req, res) => {
         });
       });
     }
+  });
+});
+
+app.post("/removetagfromforum", (req, res) => {
+  const { forumId, tagId, tagName } = req.body;
+
+  if (!forumId || (!tagId && !tagName)) {
+    return res.status(400).json({ error: "forumId and either tagId or tagName are required." });
+  }
+
+  const removeTagAssociation = (resolvedTagId) => {
+    const q = "DELETE FROM forum_tags WHERE forum_id = ? AND tag_id = ?";
+
+    db.query(q, [forumId, resolvedTagId], (err) => {
+      if (err) {
+        console.error("Failed to remove tag from forum:", err.message);
+        return res.status(500).json({ error: "Unable to remove tag from forum in the database." });
+      }
+
+      const deleteUnusedTagQuery = `
+        DELETE FROM tags
+        WHERE id = ?
+          AND NOT EXISTS (SELECT 1 FROM forum_tags WHERE tag_id = ?)
+          AND NOT EXISTS (SELECT 1 FROM post_tags WHERE tag_id = ?)
+      `;
+
+      db.query(deleteUnusedTagQuery, [resolvedTagId, resolvedTagId, resolvedTagId], (cleanupErr, cleanupResult) => {
+        if (cleanupErr) {
+          console.error("Failed to clean up unused tag:", cleanupErr.message);
+          return res.status(500).json({ error: "Forum tag was removed, but the unused tag could not be cleaned up." });
+        }
+
+        return res.json({
+          message: "Tag removed from forum successfully.",
+          tagDeleted: cleanupResult.affectedRows > 0,
+        });
+      });
+    });
+  };
+
+  if (tagId) {
+    return removeTagAssociation(tagId);
+  }
+
+  db.query("SELECT id FROM tags WHERE name = ?", [tagName], (err, rows) => {
+    if (err) {
+      console.error("Failed to look up tag:", err.message);
+      return res.status(500).json({ error: "Unable to find the tag in the database." });
+    }
+
+    if (rows.length === 0) {
+      return res.json({ message: "Tag was already removed.", tagDeleted: false });
+    }
+
+    return removeTagAssociation(rows[0].id);
+  });
+});
+
+app.post("/removemoderator", (req, res) => {
+  const { forumId, userId } = req.body;
+
+  if (!forumId || !userId) {
+    return res.status(400).json({ error: "forumId and userId are required." });
+  }
+
+  const q = "DELETE FROM moderators WHERE forum_id = ? AND user_id = ?";
+
+  db.query(q, [forumId, userId], (err, result) => {
+    if (err) {
+      console.error("Failed to remove moderator:", err.message);
+      return res.status(500).json({ error: "Unable to remove moderator." });
+    }
+    return res.status(200).json({ message: "Moderator removed successfully." });
+  });
+});
+
+app.post("/editforum", (req, res) => {
+  const { forumId, name, description, image } = req.body;
+
+  if (!forumId || !name) {
+    return res.status(400).json({ error: "forumId and name are required." });
+  }
+
+  const trimmedName = String(name).trim();
+  const trimmedDescription = description ? String(description).trim() : "";
+
+  const q = "UPDATE forums SET name = ?, description = ?, forum_picture_url = ? WHERE id = ?";
+
+  db.query(q, [trimmedName, trimmedDescription, image || "", forumId], (err, result) => {
+    if (err) {
+      console.error("Failed to edit forum:", err.message);
+      return res.status(500).json({ error: "Unable to edit the forum." });
+    }
+    return res.status(200).json({ message: "Forum edited successfully." });
   });
 });
 

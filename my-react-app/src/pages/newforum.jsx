@@ -327,8 +327,8 @@ export function NewForum() {
                 )}
               </div>
             </div>
-
-            <div className={`input-container ${isFocused.name ? 'active' : ''}`}>
+            <h2 style={{ margin: 0 }}>Forum Name</h2>
+            <div style = {{marginTop: '0'}} className={`input-container ${isFocused.name ? 'active' : ''}`}>
               <input
                 type="text"
                 value={forum.name}

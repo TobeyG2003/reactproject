@@ -1277,6 +1277,20 @@ app.post("/getmoderators", (req, res) => {
   });
 });
 
+app.post("/fetchforumtaglist", (req, res) => {
+  const { forumId } = req.body;
+
+  const q = "SELECT t.* FROM tags t JOIN forum_tags ft ON t.id = ft.tag_id WHERE ft.forum_id = ? ORDER BY t.name";
+
+  db.query(q, (err, data) => {
+    if (err) {
+      console.error("Failed to fetch tags:", err.message);
+      return res.status(500).json({ error: "Unable to fetch tags from the database." });
+    }
+    return res.json(data);
+  });
+});
+
 app.post("/addmoderator", (req, res) => {
   const { forumId, userId, status } = req.body;
 

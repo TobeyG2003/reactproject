@@ -207,7 +207,7 @@ export function Forum() {
                         {forum.followed ? 'Following' : 'Follow'}
                     </button>
                     {forum.ownedby === userdata?.id && (
-                <Link to={`/forum/${id}/edit`} style={{ marginLeft: 'auto', marginTop: '20px' }}>
+                <Link to={`/editforum/${forum.id}`} style={{ marginLeft: 'auto', marginTop: '20px' }}>
                     <button
                         style = {{
                             borderRadius: '16px',

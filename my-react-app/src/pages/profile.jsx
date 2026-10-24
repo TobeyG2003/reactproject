@@ -8,9 +8,6 @@ import { Following } from  '../components/following'
 import axios from 'axios'
 import { CgProfile } from "react-icons/cg";
 
-
-
-
 export function Profile() {
 
   

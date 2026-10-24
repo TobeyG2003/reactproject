@@ -1486,6 +1486,135 @@ app.post("/editforum", (req, res) => {
   });
 });
 
+app.post("/fetchhomeforums", (req, res) => {
+  const { orderBy, offset = 0 } = req.body;
+  const parsedOffset = Number.parseInt(offset, 10);
+  const safeOffset = Number.isSafeInteger(parsedOffset) && parsedOffset >= 0 ? parsedOffset : 0;
+  const sortOrder = {
+    Popular: "followers_count DESC, id DESC",
+    Newest: "created_at DESC, id DESC",
+    Oldest: "created_at ASC, id ASC",
+  }[orderBy] || "followers_count DESC, id DESC";
+
+  const q = `SELECT id AS forum_id FROM forums ORDER BY ${sortOrder} LIMIT 3 OFFSET ?`;
+
+  db.query(q, [safeOffset], (err, data) => {
+    if (err) {
+      console.error("Failed to fetch home forums:", err.message);
+      return res.status(500).json({ error: "Unable to fetch forums from the database." });
+    }
+    return res.json(data);
+  });
+});
+
+const getFeedPagination = (req) => {
+  const requestedLimit = Number.parseInt(req.body.limit, 10);
+  const requestedOffset = Number.parseInt(req.body.offset, 10);
+  return {
+    limit: Number.isSafeInteger(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 30) : 10,
+    offset: Number.isSafeInteger(requestedOffset) && requestedOffset >= 0 ? requestedOffset : 0,
+  };
+};
+
+app.post("/fetchfollowedposts", (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ error: "userId is required." });
+
+  const { limit, offset } = getFeedPagination(req);
+  const q = `
+    SELECT p.*
+    FROM posts p
+    INNER JOIN followed_forums ff ON ff.forum_id = p.forum_id
+    WHERE ff.user_id = ?
+    ORDER BY p.created_at DESC, p.id DESC
+    LIMIT ? OFFSET ?
+  `;
+
+  db.query(q, [userId, limit, offset], (err, data) => {
+    if (err) {
+      console.error("Failed to fetch followed forum posts:", err.message);
+      return res.status(500).json({ error: "Unable to fetch followed forum posts." });
+    }
+    return res.json(data);
+  });
+});
+
+app.post("/fetchfriendactivity", (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ error: "userId is required." });
+
+  const { limit, offset } = getFeedPagination(req);
+  const q = `
+    SELECT
+      'post' AS item_type,
+      p.id,
+      p.forum_id,
+      p.user_id,
+      p.title,
+      p.content,
+      p.created_at,
+      p.updated_at,
+      p.likes_count,
+      p.image_url,
+      p.replies_num,
+      NULL AS post_id,
+      NULL AS reply_total,
+      NULL AS reply_chain_count,
+      NULL AS parent_comment_id,
+      NULL AS reply_user_id
+    FROM posts p
+    INNER JOIN friends f ON f.friend_id = p.user_id AND f.user_id = ? AND f.status = 'accepted'
+    WHERE p.user_id <> ?
+
+    UNION ALL
+
+    SELECT
+      'comment' AS item_type,
+      c.id,
+      NULL AS forum_id,
+      c.user_id,
+      NULL AS title,
+      c.content,
+      c.created_at,
+      c.updated_at,
+      c.likes_count,
+      c.image_url,
+      NULL AS replies_num,
+      c.post_id,
+      c.reply_total,
+      c.reply_chain_count,
+      c.parent_comment_id,
+      c.reply_user_id
+    FROM comments c
+    INNER JOIN friends f ON f.friend_id = c.user_id AND f.user_id = ? AND f.status = 'accepted'
+    WHERE c.user_id <> ?
+
+    ORDER BY created_at DESC, id DESC
+    LIMIT ? OFFSET ?
+  `;
+
+  db.query(q, [userId, userId, userId, userId, limit, offset], (err, data) => {
+    if (err) {
+      console.error("Failed to fetch friend activity:", err.message);
+      return res.status(500).json({ error: "Unable to fetch friend activity." });
+    }
+    return res.json(data);
+  });
+});
+
+app.post("/fetchlatestactivity", (req, res) => {
+  const { limit, offset } = getFeedPagination(req);
+  const q = "SELECT * FROM posts ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?";
+
+  db.query(q, [limit, offset], (err, data) => {
+    if (err) {
+      console.error("Failed to fetch latest posts:", err.message);
+      return res.status(500).json({ error: "Unable to fetch latest posts." });
+    }
+    return res.json(data);
+  });
+});
+
 app.listen(3000, () => {
   console.log("Server is running on port 3000!");
 });

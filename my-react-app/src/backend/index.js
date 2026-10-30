@@ -1615,6 +1615,98 @@ app.post("/fetchlatestactivity", (req, res) => {
   });
 });
 
+app.post("/searchtags", (req, res) => {
+  const searchTerm = String(req.body.searchTerm || "").trim();
+
+  const q = `
+    SELECT
+      t.id,
+      t.name,
+      COUNT(ft.forum_id) AS forum_count
+    FROM tags t
+    LEFT JOIN forum_tags ft ON ft.tag_id = t.id
+    WHERE t.name LIKE ?
+    GROUP BY t.id, t.name
+    ORDER BY forum_count DESC, t.name ASC
+    LIMIT 10
+  `;
+
+  db.query(q, [`%${searchTerm}%`], (err, data) => {
+    if (err) {
+      console.error("Failed to search tags:", err.message);
+      return res.status(500).json({ error: "Unable to search tags." });
+    }
+    return res.json(data);
+  });
+});
+
+app.post("/searchresults", (req, res) => {
+  const searchTerm = String(req.body.searchTerm || "").trim();
+  const filter = String(req.body.filter || "Forums");
+  const sortBy = String(req.body.sortBy || "Popular");
+  const tags = Array.isArray(req.body.tags) ? req.body.tags : [];
+  const limit = 10;
+  const offset = Math.max(Number.parseInt(req.body.offset) || 0, 0);
+  const pattern = `%${searchTerm}%`;
+  let q;
+  let values;
+
+  if (filter === "Users") {
+    const order = sortBy === "Newest"
+      ? "created_at DESC, id DESC"
+      : sortBy === "Oldest"
+        ? "created_at ASC, id ASC"
+        : "friends_count DESC, id DESC";
+
+    q = `SELECT * FROM users
+         WHERE username LIKE ? OR display_name LIKE ?
+         ORDER BY ${order} LIMIT ? OFFSET ?`;
+    values = [pattern, pattern, limit, offset];
+  } else if (filter === "Posts") {
+    const order = sortBy === "Newest"
+      ? "created_at DESC, id DESC"
+      : sortBy === "Oldest"
+        ? "created_at ASC, id ASC"
+        : "likes_count DESC, id DESC";
+
+    q = `SELECT * FROM posts
+         WHERE title LIKE ? OR content LIKE ?
+         ORDER BY ${order} LIMIT ? OFFSET ?`;
+    values = [pattern, pattern, limit, offset];
+  } else {
+    const order = sortBy === "Newest"
+      ? "created_at DESC, id DESC"
+      : sortBy === "Oldest"
+        ? "created_at ASC, id ASC"
+        : "followers_count DESC, id DESC";
+
+    const tagChecks = tags.map(() => `
+      EXISTS (
+        SELECT 1 FROM forum_tags ft
+        JOIN tags t ON t.id = ft.tag_id
+        WHERE ft.forum_id = f.id AND t.name = ?
+      )
+    `);
+
+    const tagWhere = tagChecks.length
+      ? ` AND ${tagChecks.join(" AND ")}`
+      : "";
+
+    q = `SELECT f.* FROM forums f
+         WHERE (f.name LIKE ? OR f.description LIKE ?)${tagWhere}
+         ORDER BY ${order} LIMIT ? OFFSET ?`;
+    values = [pattern, pattern, ...tags, limit, offset];
+  }
+
+  db.query(q, values, (err, data) => {
+    if (err) {
+      console.error("Search failed:", err.message);
+      return res.status(500).json({ error: "Unable to search." });
+    }
+    res.json(data);
+  });
+});
+
 app.listen(3000, () => {
   console.log("Server is running on port 3000!");
 });

@@ -116,6 +116,16 @@ export function Post() {
     fetchCommentData();
   }, [id]);
 
+  const sortedComments = [...backendComments].sort((commentA, commentB) => {
+    if (sortBy === 'Most Likes') {
+      return Number(commentB.likes_count || 0) - Number(commentA.likes_count || 0);
+    }
+
+    const dateA = new Date((commentA.created_at || '').replace(' ', 'T')).getTime();
+    const dateB = new Date((commentB.created_at || '').replace(' ', 'T')).getTime();
+    return sortBy === 'Oldest' ? dateA - dateB : dateB - dateA;
+  });
+
   return (
     <>
       <section className="forum">
@@ -155,7 +165,7 @@ export function Post() {
                 flexDirection: 'row',
                 gap: '10px',
               }}>
-                <p>Sort By: </p>
+                <p>Sort By: {sortBy} </p>
                 <div className="dropdown-container" ref={dropdownRef} style={{ position: "relative", display: "inline-block", height: '30px' }}>
                       <MdArrowDropDown size = {30} style = {{color: isOpen? '#ffffff':''}} className="dropdown-button" onClick={toggleDropdown} />
                       {isOpen && (
@@ -175,11 +185,11 @@ export function Post() {
                             Oldest
                             </li>
                             <li 
-                              className = {sortBy === 'Popular' ? 'dropdownElementSelected' : 'dropdownElement'}
-                              onClick={() => {setIsOpen(false); setSortBy('Popular')}}
+                              className = {sortBy === 'Most Likes' ? 'dropdownElementSelected' : 'dropdownElement'}
+                              onClick={() => {setIsOpen(false); setSortBy('Most Likes')}}
                               style={{ padding: "8px 16px", }}
                             >
-                            Popular
+                            Most Likes
                             </li>
                         </ul>
                       )}
@@ -263,8 +273,8 @@ export function Post() {
         <h3 style={{ color: '#ffffff', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
           Comments ({backendComments.length})
         </h3>
-        {backendComments.length > 0 ? (
-          backendComments.map((comment) => (
+        {sortedComments.length > 0 ? (
+          sortedComments.map((comment) => (
             <Comment 
               key={comment.id}
               commentdata={comment} 

@@ -14,7 +14,7 @@ export function NewForum() {
   const dialogRef = useRef(null)
   const modSearchRequestRef = useRef(0)
 
-    const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
 
    useEffect(() => {
     if (!dialogRef.current) return;

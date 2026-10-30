@@ -56,10 +56,7 @@ export function Navbar() {
       <p style={{color: '#ffffff'}}>React Forum</p>
     </div>
       <Link to="/" className={currentPath === '/' ? "navbarLinkSelected" : "navbarLink"}>
-        Go to Page 1
-      </Link>
-      <Link to="/page2/480" className={currentPath === '/page2' ? "navbarLinkSelected" : "navbarLink"}>
-        Go to Page 2
+        Home
       </Link>
       <Link to="/search" className={currentPath === '/search' ? "navbarLinkSelected" : "navbarLink"}>
         Search

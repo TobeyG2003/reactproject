@@ -137,7 +137,28 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
     replyUsername: '',
     replyUserId: commentdata?.reply_user_id || '',
     replySpacing: 0,
+    canModerate: false,
+    authorRole: '',
+    originalPoster: false,
   });
+
+
+const removeComment = async () => {
+  try {
+    await axios.put(
+      `http://localhost:3000/comments/${comments.commentId}/remove`,
+      { userId: userdata.id }
+    );
+
+    setComments((prev) => ({
+      ...prev,
+      postContent: '[removed]',
+      postPicture: '',
+    }));
+  } catch (error) {
+    console.error('Error removing comment:', error);
+  }
+};
 
   const [ newComment, setNewComment ] = useState ({
     isAdd: false,
@@ -274,6 +295,85 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
     fetchIsLiked();
   }, [comments.userId, comments.commentId, comments.replyUserId, comments.forumId, userdata?.id]);
 
+  useEffect(() => {
+  if (!comments.forumId || !userdata?.id) return;
+
+  const fetchPermissions = async () => {
+    try {
+      const postResponse = await axios.post(
+        'http://localhost:3000/fetchpostdata',
+        { postId: comments.forumId }
+      );
+      const forumId = postResponse.data.forum_id;
+
+      setComments((prev) => ({ ...prev, forumId }));
+
+      const forumResponse = await axios.post(
+        'http://localhost:3000/fetchforumdata',
+        { forumId }
+      );
+      const moderatorResponse = await axios.post(
+        'http://localhost:3000/checkmod',
+        { userId: userdata.id, forumId }
+      );
+
+      const isOwner =
+        Number(forumResponse.data.owned_by) === Number(userdata.id);
+      const isModerator =
+        moderatorResponse.data.isModerator &&
+        moderatorResponse.data.status !== null;
+
+      setComments((prev) => ({
+        ...prev,
+        canModerate: isOwner || isModerator,
+      }));
+    } catch (error) {
+      console.error('Error checking comment moderation permission:', error);
+    }
+  };
+
+  fetchPermissions();
+}, [comments.forumId, userdata?.id]);
+
+useEffect(() => {
+  if (!comments.forumId || !comments.userId) return;
+
+  const fetchAuthorRole = async () => {
+    try {
+      const post = await axios.post(
+        'http://localhost:3000/fetchpostdata',
+        { postId: comments.forumId }
+      );
+      const forumId = post.data.forum_id;
+
+      const forum = await axios.post(
+        'http://localhost:3000/fetchforumdata',
+        { forumId }
+      );
+      const moderator = await axios.post(
+        'http://localhost:3000/checkmod',
+        { userId: comments.userId, forumId }
+      );
+
+      const isOwner =
+        Number(forum.data.owned_by) === Number(comments.userId);
+      const isModerator =
+        moderator.data.isModerator && moderator.data.status !== null;
+      const isOriginalPoster =
+        Number(post.data.user_id) === Number(comments.userId);
+
+      setComments((prev) => ({
+        ...prev,
+        authorRole: isOwner ? 'Owner' : isModerator ? 'Moderator' : '',
+        originalPoster: isOriginalPoster ? true : false
+      }));
+    } catch (error) {
+      console.error('Error fetching comment author role:', error);
+    }
+  };
+
+  fetchAuthorRole();
+}, [comments.forumId, comments.userId]);
     return (
       <>
         <div className="comment"
@@ -383,6 +483,17 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
               </div>
             )}
                 <p className='navbarLink'style={{ color: '#ffffff', fontSize: '14px' }} data-stop-card-navigation onClick={() => navigate(`/profile/${comments.userId}`)}>{comments.username || 'Unavailable'}</p>
+                {comments.originalPoster && (
+                  <p style={{ color: '#00bfff', fontSize: '12px', margin: 0 }}>
+                  (OP)
+                  </p>
+                  )}
+
+                  {comments.authorRole && comments.authorRole !== 'OP' && (
+                  <p style={{ color: '#8ab4ff', fontSize: '12px', margin: 0 }}>
+                  ({comments.authorRole})
+                  </p>
+                  )}
                 <p>
                     <TimeAgo datetime={comments.date ? comments.date.replace(' ', 'T') : ''} locale="en_US" />
                 </p>
@@ -478,7 +589,23 @@ export function Comment( {commentdata, isCard = true, postId = null, isReply = f
             </button>
             }</>)}
             <div style={{ display: 'flex', gap: '10px', flexDirection: 'row', marginLeft: 'auto' }}>
-              {userdata?.id == comments.userId && (
+              {(userdata?.id === comments.userId || comments.canModerate ) && comments.postContent !== '[removed]' && (
+                <button
+                  type="button"
+                  style={{
+                    height: '25px',
+                    marginTop: '10px',
+                    marginLeft: '10px',
+                    alignSelf: 'center',
+                    backgroundColor: '#b30000',
+                  }}
+                  onClick={removeComment}
+                >
+                  Remove
+                </button>
+              )}
+              {userdata?.id === comments.userId &&
+                comments.postContent !== '[removed]' && (
                 <button
                   style = {{ height: '25px', marginTop: '10px', marginLeft: '10px', alignSelf: 'center'}}
                   onClick = {() => {setViewReplies(true), setAddReply(false), setIsEdit(true),

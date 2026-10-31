@@ -242,7 +242,9 @@ export function EditForum() {
     } else if (trimmedName.length > 40) {
       nextErrors.nameError = 'Forum name must be 40 characters or less'
       isValid = false
-    } else if (!(await checkForumnameAvailability(trimmedName))) {
+    } else if (
+      trimmedName !== forum.name &&
+      !(await checkForumnameAvailability(trimmedName))) {
       nextErrors.nameError = 'Forum name is already taken'
       isValid = false
     }

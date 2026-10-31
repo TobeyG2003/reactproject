@@ -1707,6 +1707,63 @@ app.post("/searchresults", (req, res) => {
   });
 });
 
+app.put('/comments/:id/remove', async (req, res) => {
+  const { userId } = req.body;
+  const commentId = req.params.id;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'userId is required.' });
+  }
+
+  const lookup = `
+    SELECT f.id AS forum_id, f.owned_by, c.user_id AS comment_user_id
+FROM comments c
+JOIN posts p ON p.id = c.post_id
+JOIN forums f ON f.id = p.forum_id
+WHERE c.id = ?
+  `;
+
+  db.query(lookup, [commentId], (lookupError, rows) => {
+    if (lookupError) {
+      return res.status(500).json({ error: 'Unable to verify comment permissions.' });
+    }
+    if (!rows.length) {
+      return res.status(404).json({ error: 'Comment not found.' });
+    }
+
+    const forum = rows[0];
+    const moderatorQuery =
+      'SELECT status FROM moderators WHERE forum_id = ? AND user_id = ? LIMIT 1';
+
+    db.query(moderatorQuery, [forum.forum_id, userId], (modError, mods) => {
+      if (modError) {
+        return res.status(500).json({ error: 'Unable to verify moderator permissions.' });
+      }
+
+      const isAuthor = Number(forum.comment_user_id) === Number(userId);
+      const isOwner = Number(forum.owned_by) === Number(userId);
+      const isModerator = mods.length > 0;
+
+      if (!isAuthor && !isOwner && !isModerator) {
+        return res.status(403).json({
+          error: 'You cannot remove this comment.',
+        });
+      }
+
+      db.query(
+        'UPDATE comments SET content = ?, image_url = ? WHERE id = ?',
+        ['[removed]', '', commentId],
+        (updateError) => {
+          if (updateError) {
+            return res.status(500).json({ error: 'Unable to remove comment.' });
+          }
+          return res.json({ message: 'Comment removed successfully.' });
+        }
+      );
+    });
+  });
+});
+
 app.listen(3000, () => {
   console.log("Server is running on port 3000!");
 });

@@ -26,6 +26,7 @@ export function Forumpost({postdata, isCard = true}) {
     forumName: '',
     forumPicture: '',
     postRepliesCount: postdata?.replies_num || 0,
+    authorRole: '',
   });
 
   const { id } = useParams();
@@ -113,10 +114,24 @@ export function Forumpost({postdata, isCard = true}) {
       if (!post.forumId) return;
       try {
         const response = await axios.post('http://localhost:3000/fetchforumdata', { forumId: post.forumId });
+         const moderatorResponse = await axios.post(
+          'http://localhost:3000/checkmod',
+          {
+            userId: post.userId,
+            forumId: post.forumId,
+          }
+        );
+
+    const isOwner =
+      Number(response.data.owned_by) === Number(post.userId);
+    const isModerator =
+      moderatorResponse.data.isModerator &&
+      moderatorResponse.data.status !== null;
         setPost((prevPost) => ({
           ...prevPost,
           forumName: response.data.name,
-          forumPicture: response.data.forum_picture_url
+          forumPicture: response.data.forum_picture_url,
+          authorRole: isOwner ? 'Owner' : isModerator ? 'Moderator' : '',
         }));
       } catch (error) {
         console.error('Error fetching forum data:', error);
@@ -175,6 +190,11 @@ export function Forumpost({postdata, isCard = true}) {
     <p className="navbarLink"style={{ color: "#ffffff", fontSize: "14px" }} data-stop-card-navigation onClick={() => navigate(`/profile/${post.userId}`)}>
       {post.username || "Unavailable"}
     </p>
+    {post.authorRole && (
+  <p style={{ color: '#8ab4ff', fontSize: '12px', margin: 0 }}>
+    ({post.authorRole})
+  </p>
+)}
     <p>
       <TimeAgo datetime={post.postDate ? post.postDate.replace(" ", "T") : ""} locale="en_US" />
     </p>

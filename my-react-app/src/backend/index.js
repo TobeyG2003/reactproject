@@ -1744,6 +1744,15 @@ WHERE c.id = ?
       const isOwner = Number(forum.owned_by) === Number(userId);
       const isModerator = mods.length > 0;
 
+      const commentAuthorIsOwner =
+      Number(forum.comment_user_id) === Number(forum.owned_by);
+
+      if (isModerator && !isOwner && commentAuthorIsOwner) {
+        return res.status(403).json({
+          error: "Moderators cannot remove the forum owner's comments.",
+        });
+      }
+
       if (!isAuthor && !isOwner && !isModerator) {
         return res.status(403).json({
           error: 'You cannot remove this comment.',

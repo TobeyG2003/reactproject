@@ -589,7 +589,12 @@ useEffect(() => {
             </button>
             }</>)}
             <div style={{ display: 'flex', gap: '10px', flexDirection: 'row', marginLeft: 'auto' }}>
-              {(userdata?.id === comments.userId || comments.canModerate ) && comments.postContent !== '[removed]' && (
+                {(userdata?.id === comments.userId ||
+                (
+                  comments.canModerate &&
+                  comments.authorRole !== 'Owner'
+                )
+              ) && comments.postContent !== '[removed]' && (
                 <button
                   type="button"
                   style={{
